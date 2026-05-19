@@ -343,11 +343,11 @@ async function postTodayFixtures() {
   "BSA": "🇧🇷", // Campeonato Brasileiro Série A
   "PD": "🇪🇸",  // La Liga
   "FL1": "🇫🇷", // Ligue 1
-  "ELC": "🏴",  // Championship
+  "ELC": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",  // Championship
   "PPL": "🇵🇹", // Primeira Liga
   "EC": "🇪🇺",  // European Championship
   "SA": "🇮🇹",  // Serie A
-  "PL": "🏴"    // Premier League
+  "PL": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"    // Premier League
 };
 
     let message = "🏳️ Today’s games:
