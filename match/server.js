@@ -335,21 +335,20 @@ async function postTodayFixtures() {
       return;
     }
 
-  const countryFlags = {
+const countryFlags = {
   "WC": "🌍",   // FIFA World Cup
   "CL": "🇪🇺",  // UEFA Champions League
-  "BL1": "🇩🇪", // Bundesliga (Germany)
-  "DED": "🇳🇱", // Eredivisie (Netherlands)
-  "BSA": "🇧🇷", // Brasileirão Série A (Brazil)
-  "PD": "🇪🇸",  // La Liga (Spain)
-  "FL1": "🇫🇷", // Ligue 1 (France)
-  "ELC": "🏴",  // EFL Championship (England - flag may not display everywhere)
-  "PPL": "🇵🇹", // Primeira Liga (Portugal)
+  "BL1": "🇩🇪", // Bundesliga
+  "DED": "🇳🇱", // Eredivisie
+  "BSA": "🇧🇷", // Campeonato Brasileiro Série A
+  "PD": "🇪🇸",  // La Liga
+  "FL1": "🇫🇷", // Ligue 1
+  "ELC": "🏴",  // Championship
+  "PPL": "🇵🇹", // Primeira Liga
   "EC": "🇪🇺",  // European Championship
-  "SA": "🇮🇹",  // Serie A (Italy)
-  "PL": "🇬🇧"   // Premier League (use UK flag instead of England for stability)
+  "SA": "🇮🇹",  // Serie A
+  "PL": "🏴"    // Premier League
 };
-
     let message = "🏳️ Today’s games:
 ";
 
@@ -438,6 +437,3 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
 });
-
-
-almost exactly the same.
