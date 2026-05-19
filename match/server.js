@@ -335,19 +335,19 @@ async function postTodayFixtures() {
       return;
     }
 
-   const countryFlags = {
+  const countryFlags = {
   "WC": "🌍",   // FIFA World Cup
   "CL": "🇪🇺",  // UEFA Champions League
-  "BL1": "🇩🇪", // Bundesliga
-  "DED": "🇳🇱", // Eredivisie
-  "BSA": "🇧🇷", // Campeonato Brasileiro Série A
-  "PD": "🇪🇸",  // La Liga
-  "FL1": "🇫🇷", // Ligue 1
-  "ELC": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",  // Championship
-  "PPL": "🇵🇹", // Primeira Liga
+  "BL1": "🇩🇪", // Bundesliga (Germany)
+  "DED": "🇳🇱", // Eredivisie (Netherlands)
+  "BSA": "🇧🇷", // Brasileirão Série A (Brazil)
+  "PD": "🇪🇸",  // La Liga (Spain)
+  "FL1": "🇫🇷", // Ligue 1 (France)
+  "ELC": "🏴",  // EFL Championship (England - flag may not display everywhere)
+  "PPL": "🇵🇹", // Primeira Liga (Portugal)
   "EC": "🇪🇺",  // European Championship
-  "SA": "🇮🇹",  // Serie A
-  "PL": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"    // Premier League
+  "SA": "🇮🇹",  // Serie A (Italy)
+  "PL": "🇬🇧"   // Premier League (use UK flag instead of England for stability)
 };
 
     let message = "🏳️ Today’s games:
