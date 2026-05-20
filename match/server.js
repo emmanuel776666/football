@@ -349,28 +349,26 @@ const countryFlags = {
   "SA": "🇮🇹",  // Serie A
   "PL": "🏴"    // Premier League
 };
-    let message = "🏳️ Today’s games:
-";
+   let message = `🏳️ Today’s games:\n`;
 
-    for (const match of matches) {
+for (const match of matches) {
 
-      const home = match.homeTeam.name;
-      const away = match.awayTeam.name;
+  const home = match.homeTeam.name;
+  const away = match.awayTeam.name;
 
-      const competitionCode = match.competition.code;
+  const competitionCode = match.competition.code;
 
-      const flag = countryFlags[competitionCode] || "⚽";
+  const flag = countryFlags[competitionCode] || "⚽";
 
-      const matchTime = new Date(match.utcDate)
-        .toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "Africa/Lagos"
-        });
+  const matchTime = new Date(match.utcDate)
+    .toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Africa/Lagos"
+    });
 
-      message += `${flag} ${home} - ${away} (${matchTime})
-`;
-    }
+  message += `${flag} ${home} - ${away} (${matchTime})\n`;
+}
 
     await postToFacebook(message);
 
