@@ -96,13 +96,24 @@ async function getLiveMatches() {
       const status = match.status;
 
       // =======================
-      // MATCH MINUTE
-      // =======================
+// MATCH MINUTE + EXTRA TIME
+// =======================
 
-      const minute =
-        match.minute
-          ? `${match.minute}'`
-          : "";
+let minute = "";
+
+if (match.minute) {
+
+  minute = `${match.minute}'`;
+
+  // Extra time support
+  if (match.injuriesTime) {
+
+    minute =
+`${match.minute}+${match.injuriesTime}'`;
+
+  }
+
+}
 
       // =======================
       // FIRST TIME
