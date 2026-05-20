@@ -11,23 +11,6 @@ const PAGE_ID = process.env.PAGE_ID;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
 // =======================
-// COMPETITIONS
-// =======================
-
-// UEFA Champions League = CL
-// Premier League = PL
-// La Liga = PD
-// Serie A = SA
-// Bundesliga = BL1
-
-// No manual competition filtering needed
-// The API will automatically return all matches available in your current plan.
-
-// =======================
-// ACTIVE 24/7
-// =======================
-
-// =======================
 // MEMORY
 // =======================
 
@@ -46,11 +29,11 @@ async function getLiveMatches() {
   try {
 
     // =======================
-    // FETCH MATCHES
+    // FETCH LIVE MATCHES ONLY
     // =======================
 
     const response = await axios.get(
-      "https://api.football-data.org/v4/matches",
+      "https://api.football-data.org/v4/matches?status=LIVE",
       {
         headers: {
           "X-Auth-Token": API_KEY
@@ -62,8 +45,11 @@ async function getLiveMatches() {
     // RATE LIMIT HEADERS
     // =======================
 
-    const requestsLeft = response.headers["x-requestsavailable"];
-    const resetTime = response.headers["x-requestcounter-reset"];
+    const requestsLeft =
+      response.headers["x-requestsavailable"];
+
+    const resetTime =
+      response.headers["x-requestcounter-reset"];
 
     console.log(`Requests Left: ${requestsLeft}`);
     console.log(`Counter Reset In: ${resetTime} seconds`);
@@ -75,7 +61,7 @@ async function getLiveMatches() {
     const matches = response.data.matches;
 
     if (!matches.length) {
-      console.log("No matches found");
+      console.log("No live matches");
       return;
     }
 
@@ -90,12 +76,33 @@ async function getLiveMatches() {
       const home = match.homeTeam.name;
       const away = match.awayTeam.name;
 
-      const homeGoals = match.score.fullTime.home ?? 0;
-      const awayGoals = match.score.fullTime.away ?? 0;
+      // =======================
+      // LIVE SCORE
+      // =======================
 
-      const currentScore = `${homeGoals}-${awayGoals}`;
+      const homeGoals =
+        match.score.fullTime.home ??
+        match.score.halfTime.home ??
+        0;
+
+      const awayGoals =
+        match.score.fullTime.away ??
+        match.score.halfTime.away ??
+        0;
+
+      const currentScore =
+        `${homeGoals}-${awayGoals}`;
 
       const status = match.status;
+
+      // =======================
+      // MATCH MINUTE
+      // =======================
+
+      const minute =
+        match.minute
+          ? `${match.minute}'`
+          : "";
 
       // =======================
       // FIRST TIME
@@ -110,7 +117,7 @@ async function getLiveMatches() {
       // =======================
 
       if (
-        status === "IN_PLAY" &&
+        status === "LIVE" &&
         !postedKickOff[fixtureId]
       ) {
 
@@ -121,7 +128,9 @@ async function getLiveMatches() {
 
         postedKickOff[fixtureId] = true;
 
-        console.log(`Kick Off Posted: ${home} vs ${away}`);
+        console.log(
+          `Kick Off Posted: ${home} vs ${away}`
+        );
       }
 
       // =======================
@@ -140,7 +149,9 @@ async function getLiveMatches() {
 
         postedHalfTime[fixtureId] = true;
 
-        console.log(`Half Time Posted: ${home} vs ${away}`);
+        console.log(
+          `Half Time Posted: ${home} vs ${away}`
+        );
       }
 
       // =======================
@@ -159,24 +170,37 @@ async function getLiveMatches() {
 
         postedFullTime[fixtureId] = true;
 
-        console.log(`Full Time Posted: ${home} vs ${away}`);
+        console.log(
+          `Full Time Posted: ${home} vs ${away}`
+        );
       }
 
       // =======================
       // SCORE CHANGE
       // =======================
 
-      if (previousScores[fixtureId] !== currentScore) {
+      if (
+        previousScores[fixtureId] !== currentScore
+      ) {
 
-        const oldScore = previousScores[fixtureId];
+        const oldScore =
+          previousScores[fixtureId];
 
         const oldTotal =
-          oldScore.split("-")
-            .reduce((a, b) => Number(a) + Number(b), 0);
+          oldScore
+            .split("-")
+            .reduce(
+              (a, b) => Number(a) + Number(b),
+              0
+            );
 
         const newTotal =
-          currentScore.split("-")
-            .reduce((a, b) => Number(a) + Number(b), 0);
+          currentScore
+            .split("-")
+            .reduce(
+              (a, b) => Number(a) + Number(b),
+              0
+            );
 
         // =======================
         // GOAL CANCELLED (VAR)
@@ -184,18 +208,24 @@ async function getLiveMatches() {
 
         if (newTotal < oldTotal) {
 
-          const postId = goalPosts[fixtureId];
+          const postId =
+            goalPosts[fixtureId];
 
           if (postId) {
 
             const cancelMessage =
-`❌ GOAL CANCELLED (VAR)
+`❌ GOAL CANCELLED (VAR) ${minute}
 
 🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}`;
 
-            await editFacebookPost(postId, cancelMessage);
+            await editFacebookPost(
+              postId,
+              cancelMessage
+            );
 
-            console.log(`Goal Cancelled: ${home} vs ${away}`);
+            console.log(
+              `Goal Cancelled: ${home} vs ${away}`
+            );
           }
 
         }
@@ -209,17 +239,24 @@ async function getLiveMatches() {
           const message =
 `🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-⚽ GOAL! Score Updated`;
+⚽ GOAL! ${minute}`;
 
-          const postId = await postToFacebook(message);
+          const postId =
+            await postToFacebook(message);
 
           goalPosts[fixtureId] = postId;
 
-          console.log(`Goal Posted: ${home} ${currentScore} ${away}`);
+          console.log(
+            `Goal Posted: ${home} ${currentScore} ${away}`
+          );
         }
 
-        // Save latest score
-        previousScores[fixtureId] = currentScore;
+        // =======================
+        // SAVE SCORE
+        // =======================
+
+        previousScores[fixtureId] =
+          currentScore;
       }
 
     }
@@ -230,7 +267,6 @@ async function getLiveMatches() {
 
       console.log(error.response.data);
 
-      // Rate limit debug
       console.log(error.response.headers);
 
     } else {
@@ -282,7 +318,10 @@ async function postToFacebook(message) {
 // EDIT FACEBOOK POST
 // =======================
 
-async function editFacebookPost(postId, message) {
+async function editFacebookPost(
+  postId,
+  message
+) {
 
   try {
 
@@ -335,40 +374,64 @@ async function postTodayFixtures() {
       return;
     }
 
-const countryFlags = {
-  "WC": "🌍",   // FIFA World Cup
-  "CL": "🇪🇺",  // UEFA Champions League
-  "BL1": "🇩🇪", // Bundesliga
-  "DED": "🇳🇱", // Eredivisie
-  "BSA": "🇧🇷", // Campeonato Brasileiro Série A
-  "PD": "🇪🇸",  // La Liga
-  "FL1": "🇫🇷", // Ligue 1
-  "ELC": "🏴",  // Championship
-  "PPL": "🇵🇹", // Primeira Liga
-  "EC": "🇪🇺",  // European Championship
-  "SA": "🇮🇹",  // Serie A
-  "PL": "🏴"    // Premier League
-};
-   let message = `🏳️ Today’s games:\n`;
+    // =======================
+    // FLAGS
+    // =======================
 
-for (const match of matches) {
+    const countryFlags = {
+      "WC": "🌍",
+      "CL": "🇪🇺",
+      "BL1": "🇩🇪",
+      "DED": "🇳🇱",
+      "BSA": "🇧🇷",
+      "PD": "🇪🇸",
+      "FL1": "🇫🇷",
+      "ELC": "🏴",
+      "PPL": "🇵🇹",
+      "EC": "🇪🇺",
+      "SA": "🇮🇹",
+      "PL": "🏴"
+    };
 
-  const home = match.homeTeam.name;
-  const away = match.awayTeam.name;
+    let message =
+`🏳️ Today’s games:
 
-  const competitionCode = match.competition.code;
+`;
 
-  const flag = countryFlags[competitionCode] || "⚽";
+    // =======================
+    // LOOP FIXTURES
+    // =======================
 
-  const matchTime = new Date(match.utcDate)
-    .toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: "Africa/Lagos"
-    });
+    for (const match of matches) {
 
-  message += `${flag} ${home} - ${away} (${matchTime})\n`;
-}
+      const home =
+        match.homeTeam.name;
+
+      const away =
+        match.awayTeam.name;
+
+      const competitionCode =
+        match.competition.code;
+
+      const flag =
+        countryFlags[competitionCode] || "⚽";
+
+      const matchTime =
+        new Date(match.utcDate)
+          .toLocaleTimeString(
+            "en-GB",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Africa/Lagos"
+            }
+          );
+
+      message +=
+`${flag} ${home} - ${away} (${matchTime})
+`;
+
+    }
 
     await postToFacebook(message);
 
@@ -392,19 +455,22 @@ for (const match of matches) {
 
 cron.schedule("*/1 * * * *", () => {
 
-  console.log("Checking matches...");
+  console.log("Checking live matches...");
 
   getLiveMatches();
 
 });
 
 // =======================
-// POST FIXTURES EVERY DAY 8AM
+// POST FIXTURES EVERY DAY
+// 8AM
 // =======================
 
 cron.schedule("0 8 * * *", () => {
 
-  console.log("Posting today's fixtures...");
+  console.log(
+    "Posting today's fixtures..."
+  );
 
   postTodayFixtures();
 
@@ -418,7 +484,9 @@ setTimeout(() => {
 
   getLiveMatches();
 
-  console.log("Football bot running...");
+  console.log(
+    "Football bot running..."
+  );
 
 }, 60000);
 
@@ -426,12 +494,21 @@ setTimeout(() => {
 // EXPRESS SERVER
 // =======================
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+  process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Football bot is running...");
+
+  res.send(
+    "Football bot is running..."
+  );
+
 });
 
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+
+  console.log(
+    "Server running on port " + PORT
+  );
+
 });
