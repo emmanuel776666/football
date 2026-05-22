@@ -436,7 +436,7 @@ if (!validMatches.length) {
     // LOOP FIXTURES
     // =======================
 
-    for (const match of validMatches) { {
+    for (const match of validMatches)  {
 
       const home =
         match.homeTeam.name;
