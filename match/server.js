@@ -46,7 +46,7 @@ async function getLiveMatches() {
     // =======================
 
     const requestsLeft =
-      response.headers["x-requestsavailable"];
+      response.headers["x-requests-available"];
 
     const resetTime =
       response.headers["x-requestcounter-reset"];
