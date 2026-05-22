@@ -477,7 +477,7 @@ cron.schedule("*/1 * * * *", () => {
 // 8AM
 // =======================
 
-cron.schedule("0 8 * * *", () => {
+cron.schedule("0 6 * * *", () => {
 
   console.log(
     "Posting today's fixtures..."
