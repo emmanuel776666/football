@@ -380,10 +380,33 @@ async function postTodayFixtures() {
 
     const matches = response.data.matches;
 
-    if (!matches.length) {
-      console.log("No fixtures today");
-      return;
-    }
+   // Only upcoming matches
+
+const now = new Date();
+
+const validMatches = matches.filter(match => {
+
+  const kickoff =
+    new Date(match.utcDate);
+
+  return (
+    kickoff > now &&
+    ["SCHEDULED", "TIMED"].includes(
+      match.status
+    )
+  );
+
+});
+
+if (!validMatches.length) {
+
+  console.log(
+    "No upcoming fixtures today"
+  );
+
+  return;
+
+}
 
     // =======================
     // FLAGS
@@ -413,7 +436,7 @@ async function postTodayFixtures() {
     // LOOP FIXTURES
     // =======================
 
-    for (const match of matches) {
+    for (const match of validMatches) { {
 
       const home =
         match.homeTeam.name;
@@ -439,7 +462,7 @@ async function postTodayFixtures() {
           );
 
       message +=
-`${flag} ${home} - ${away} (${matchTime})
+`${flag} ${home} vs ${away} (${matchTime})
 `;
 
     }
