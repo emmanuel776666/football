@@ -119,34 +119,32 @@ async function getLiveMatches() {
         `${homeGoals}-${awayGoals}`;
 
       // =======================
-      // MATCH TIME
-      // =======================
+// GOAL TIME
+// =======================
 
-      let minute = "";
+let minute = "";
 
-      if (
-        match.score?.duration === "FIRST_HALF"
-      ) {
+if (match.goals && match.goals.length > 0) {
 
-        minute = "1st Half";
+  const latestGoal =
+    match.goals[match.goals.length - 1];
 
-      }
+  if (latestGoal.minute) {
 
-      else if (
-        match.score?.duration === "SECOND_HALF"
-      ) {
+    minute = `${latestGoal.minute}'`;
 
-        minute = "2nd Half";
+    // Extra time support
 
-      }
+    if (latestGoal.injuryTime) {
 
-      else if (
-        match.score?.duration === "EXTRA_TIME"
-      ) {
+      minute =
+`${latestGoal.minute}+${latestGoal.injuryTime}'`;
 
-        minute = "ET";
+    }
 
-      }
+  }
+
+}
 
       // =======================
       // FIRST SAVE
