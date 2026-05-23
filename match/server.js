@@ -300,9 +300,7 @@ ${home} 0-0 ${away}`;
           const message =
 `🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-⚽ GOAL!
-
-⏱ ${minute}`;
+⚽ GOAL! ⏱${timeDisplay}}`;
 
           const postId =
             await postToFacebook(message);
