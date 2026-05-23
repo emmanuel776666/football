@@ -294,9 +294,7 @@ ${home} 0-0 ${away}`;
         // =======================
 
         else {
-console.log(
-  JSON.stringify(match, null, 2)
-);
+
           const message =
 `🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
