@@ -118,47 +118,28 @@ async function getLiveMatches() {
       const currentScore =
         `${homeGoals}-${awayGoals}`;
 
-      // =======================
-      // MATCH TIME
+           // =======================
+      // MATCH TIME (Fallback for general updates)
       // =======================
 
       let minute = "";
 
-      if (
-        match.score?.duration === "FIRST_HALF"
-      ) {
-
+      if (match.score?.duration === "FIRST_HALF") {
         minute = "1st Half";
-
       }
-
-      else if (
-        match.score?.duration === "SECOND_HALF"
-      ) {
-
+      else if (match.score?.duration === "SECOND_HALF") {
         minute = "2nd Half";
-
       }
-
-      else if (
-        match.score?.duration === "EXTRA_TIME"
-      ) {
-
+      else if (match.score?.duration === "EXTRA_TIME") {
         minute = "ET";
-
       }
 
       // =======================
       // FIRST SAVE
       // =======================
 
-      if (
-        previousScores[fixtureId] === undefined
-      ) {
-
-        previousScores[fixtureId] =
-          currentScore;
-
+      if (previousScores[fixtureId] === undefined) {
+        previousScores[fixtureId] = currentScore;
       }
 
       // =======================
@@ -176,62 +157,97 @@ async function getLiveMatches() {
 ${home} 0-0 ${away}`;
 
         await postToFacebook(kickOffMessage);
-
         postedKickOff[fixtureId] = true;
-
-        console.log(
-          `Kick Off Posted: ${home} vs ${away}`
-        );
-
+        console.log(`Kick Off Posted: ${home} vs ${away}`);
       }
 
       // =======================
       // HALF TIME
       // =======================
 
-      if (
-        status === "PAUSED" &&
-        !postedHalfTime[fixtureId]
-      ) {
+      if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
 
-        const halfTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} [HT]`;
+        const halfTimeMessage = `${home} ${homeGoals}-${awayGoals} ${away} [HT]`;
 
-        await postToFacebook(
-          halfTimeMessage
-        );
-
+        await postToFacebook(halfTimeMessage);
         postedHalfTime[fixtureId] = true;
-
-        console.log(
-          `Half Time Posted: ${home} vs ${away}`
-        );
-
+        console.log(`Half Time Posted: ${home} vs ${away}`);
       }
 
       // =======================
       // FULL TIME
       // =======================
 
-      if (
-        status === "FINISHED" &&
-        !postedFullTime[fixtureId]
-      ) {
+      if (status === "FINISHED" && !postedFullTime[fixtureId]) {
 
-        const fullTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
+        const fullTimeMessage = `${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
 
-        await postToFacebook(
-          fullTimeMessage
-        );
-
+        await postToFacebook(fullTimeMessage);
         postedFullTime[fixtureId] = true;
-
-        console.log(
-          `Full Time Posted: ${home} vs ${away}`
-        );
-
+        console.log(`Full Time Posted: ${home} vs ${away}`);
       }
+
+      // =======================
+      // SCORE CHANGE
+      // =======================
+
+      if (previousScores[fixtureId] !== currentScore) {
+
+        const oldScore = previousScores[fixtureId];
+        const oldTotal = oldScore.split("-").reduce((a, b) => Number(a) + Number(b), 0);
+        const newTotal = currentScore.split("-").reduce((a, b) => Number(a) + Number(b), 0);
+
+        // =======================
+        // GOAL CANCELLED
+        // =======================
+
+        if (newTotal < oldTotal) {
+          const postId = goalPosts[fixtureId];
+
+          if (postId) {
+            const cancelMessage =
+`❌ GOAL CANCELLED (VAR)
+
+🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
+
+⏱ ${minute}`;
+
+            await editFacebookPost(postId, cancelMessage);
+            console.log(`Goal Cancelled: ${home} vs ${away}`);
+          }
+        }
+
+        // =======================
+        // NEW GOAL (Updated to extract the exact minute)
+        // =======================
+
+        else {
+          let goalMinuteDisplay = minute; // Fallback string if array lookup fails
+
+          // Extract the latest goal from football-data.org's goals array
+          if (match.goals && match.goals.length > 0) {
+            const latestGoal = match.goals[match.goals.length - 1];
+            
+            if (latestGoal.minute !== undefined && latestGoal.minute !== null) {
+              // Combine minute and injuryTime (e.g. 90+2') if injuryTime is present
+              goalMinuteDisplay = latestGoal.injuryTime 
+                ? `${latestGoal.minute}+${latestGoal.injuryTime}'` 
+                : `${latestGoal.minute}'`;
+            }
+          }
+
+          const message =
+`🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
+
+⚽ GOAL! ⏱ ${goalMinuteDisplay}`;
+
+          const postId = await postToFacebook(message);
+          goalPosts[fixtureId] = postId;
+
+          console.log(`Goal Posted: ${home} ${currentScore} ${away} at minute ${goalMinuteDisplay}`);
+        }
+
+        
 
       // =======================
       // SCORE CHANGE
