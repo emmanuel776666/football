@@ -118,7 +118,7 @@ async function getLiveMatches() {
       const currentScore =
         `${homeGoals}-${awayGoals}`;
 
-// =======================
+      // =======================
       // MATCH TIME
       // =======================
 
@@ -180,7 +180,7 @@ ${home} 0-0 ${away}`;
         postedKickOff[fixtureId] = true;
 
         console.log(
-          Kick Off Posted: ${home} vs ${away}
+          `Kick Off Posted: ${home} vs ${away}`
         );
 
       }
@@ -195,7 +195,7 @@ ${home} 0-0 ${away}`;
       ) {
 
         const halfTimeMessage =
-${home} ${homeGoals}-${awayGoals} ${away} [HT];
+`${home} ${homeGoals}-${awayGoals} ${away} [HT]`;
 
         await postToFacebook(
           halfTimeMessage
@@ -204,7 +204,7 @@ ${home} ${homeGoals}-${awayGoals} ${away} [HT];
         postedHalfTime[fixtureId] = true;
 
         console.log(
-          Half Time Posted: ${home} vs ${away}
+          `Half Time Posted: ${home} vs ${away}`
         );
 
       }
@@ -219,7 +219,7 @@ ${home} ${homeGoals}-${awayGoals} ${away} [HT];
       ) {
 
         const fullTimeMessage =
-${home} ${homeGoals}-${awayGoals} ${away} [FT];
+`${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
 
         await postToFacebook(
           fullTimeMessage
@@ -228,91 +228,10 @@ ${home} ${homeGoals}-${awayGoals} ${away} [FT];
         postedFullTime[fixtureId] = true;
 
         console.log(
-          Full Time Posted: ${home} vs ${away}
+          `Full Time Posted: ${home} vs ${away}`
         );
 
       }
-
-      // =======================
-      // SCORE CHANGE
-      // =======================
-
-      if (
-        previousScores[fixtureId] !== currentScore
-      ) {
-
-        const oldScore =
-          previousScores[fixtureId];
-
-        const oldTotal =
-          oldScore
-            .split("-")
-            .reduce(
-              (a, b) => Number(a) + Number(b),
-              0
-            );
-
-        const newTotal =
-          currentScore
-            .split("-")
-            .reduce(
-              (a, b) => Number(a) + Number(b),
-              0
-            );
-
-        // =======================
-        // GOAL CANCELLED
-        // =======================
-
-        if (newTotal < oldTotal) {
-
-          const postId =
-            goalPosts[fixtureId];
-
-          if (postId) {
-
-            const cancelMessage =
-`❌ GOAL CANCELLED (VAR)
-
-🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
-
-⏱️ ${minute}`;
-
-            await editFacebookPost(
-              postId,
-              cancelMessage
-            );
-
-            console.log(
-              Goal Cancelled: ${home} vs ${away}
-            );
-
-          }
-
-        }
-
-        // =======================
-        // NEW GOAL
-        // =======================
-
-        else {
-
-          const message =
-`🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
-
-⚽ GOAL! ⏱️${minute}`;
-
-          const postId =
-            await postToFacebook(message);
-
-          goalPosts[fixtureId] = postId;
-
-          console.log(
-            Goal Posted: ${home} ${currentScore} ${away}
-          );
-
-        }
-        
 
       // =======================
       // SCORE CHANGE
@@ -381,7 +300,7 @@ ${home} ${homeGoals}-${awayGoals} ${away} [FT];
           const message =
 `🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-⚽ GOAL! ⏱${timeDisplay}}`;
+⚽ GOAL!⏱ ${minute}`;
 
           const postId =
             await postToFacebook(message);
