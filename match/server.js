@@ -170,7 +170,6 @@ if (match.goals && match.goals.length > 0) {
 
         const kickOffMessage =
 `🏳️ Kick Off!
-
 ${home} 0-0 ${away}`;
 
         await postToFacebook(kickOffMessage);
@@ -217,7 +216,7 @@ ${home} 0-0 ${away}`;
       ) {
 
         const fullTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
+`🏁:${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
 
         await postToFacebook(
           fullTimeMessage
@@ -272,7 +271,7 @@ ${home} 0-0 ${away}`;
             const cancelMessage =
 `❌ GOAL CANCELLED (VAR)
 
-🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
+🎌 Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
 ⏱ ${minute}`;
 
@@ -296,7 +295,7 @@ ${home} 0-0 ${away}`;
         else {
 
           const message =
-`🏳️ Live: ${home} ${homeGoals}-${awayGoals} ${away}
+`🚩 Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
 ⚽ GOAL!⏱ ${minute}`;
 
@@ -563,11 +562,11 @@ async function postTodayFixtures() {
 
 // =======================
 // CHECK LIVE MATCHES
-// 8 TIMES PER MINUTE
+// 9 TIMES PER MINUTE
 // EVERY 7 SECONDS
 // =======================
 
-cron.schedule("*/7 * * * * *", async () => {
+cron.schedule("*/9 * * * * *", async () => {
 
   if (isCheckingLive) {
 
