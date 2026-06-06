@@ -492,7 +492,7 @@ async function postTodayFixtures() {
   "PPL": "🇵🇹",
   "EC": "🇪🇺",
   "SA": "🇮🇹",
-  "PL": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F"
+  "PL": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
 };
 
     let message =
