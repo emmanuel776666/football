@@ -481,19 +481,19 @@ async function postTodayFixtures() {
     // =======================
 
     const countryFlags = {
-      "WC": "🌍",
-      "CL": "🇪🇺",
-      "BL1": "🇩🇪",
-      "DED": "🇳🇱",
-      "BSA": "🇧🇷",
-      "PD": "🇪🇸",
-      "FL1": "🇫🇷",
-      "ELC": "🏴",
-      "PPL": "🇵🇹",
-      "EC": "🇪🇺",
-      "SA": "🇮🇹",
-      "PL": "🏴󠁧󠁢󠁥󠁮󠁧󠁿"
-    };
+  "WC": "🌍",
+  "CL": "🇪🇺",
+  "BL1": "🇩🇪",
+  "DED": "🇳🇱",
+  "BSA": "🇧🇷",
+  "PD": "🇪🇸",
+  "FL1": "🇫🇷",
+  "ELC": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F",
+  "PPL": "🇵🇹",
+  "EC": "🇪🇺",
+  "SA": "🇮🇹",
+  "PL": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F"
+};
 
     let message =
 `🏳️ Today’s games:
