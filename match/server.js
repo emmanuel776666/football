@@ -122,7 +122,7 @@ ${home} 0-0 ${away}`;
       if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
 
         const halfTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} [HT]`;
+`${home} ${homeGoals}-${awayGoals} ${away} 'HT'`;
 
         await postToFacebook(halfTimeMessage);
 
@@ -132,7 +132,7 @@ ${home} 0-0 ${away}`;
       if (status === "FINISHED" && !postedFullTime[fixtureId]) {
 
         const fullTimeMessage =
-`🏁:${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
+`🏁:${home} ${homeGoals}-${awayGoals} ${away} 'FT'`;
 
         await postToFacebook(fullTimeMessage);
 
