@@ -362,7 +362,7 @@ async function postTodayFixtures() {
 // CRON JOBS (UNCHANGED)
 // =======================
 
-cron.schedule("*/9 * * * * *", async () => {
+cron.schedule("*/7 * * * * *", async () => {
   if (isCheckingLive) return;
 
   isCheckingLive = true;
