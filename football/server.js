@@ -14,7 +14,7 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 // LEAGUES
 // =======================
 
-const LEAGUES = "2-39";
+const LEAGUES = "1-10";
 
 // =======================
 // ACTIVE HOURS (5PM - 11PM)
@@ -207,7 +207,7 @@ async function getLiveMatches() {
             const cancelMessage =
 `❌ GOAL CANCELLED (VAR) ${cancelledScorer} ${cancelledMinute}'
 
-🏳️Live: ${home} ${homeGoals}-${awayGoals} ${away}`;
+🎌Live: ${home} ${homeGoals}-${awayGoals} ${away}`;
 
             await editFacebookPost(postId, cancelMessage);
           }
@@ -266,7 +266,7 @@ async function getLiveMatches() {
           }
 
           const message =
-`🏳️Live: ${home} ${homeGoals}-${awayGoals} ${away}
+`🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
 ⚽ GOAL! ${scorer} (${goalMinute})${goalLabel}
 
