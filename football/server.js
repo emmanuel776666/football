@@ -14,13 +14,13 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 // LEAGUES
 // =======================
 
-const LEAGUES = "1";
+const LEAGUES = "1-10";
 
 // =======================
 // ACTIVE HOURS (5PM - 11PM)
 // =======================
 
-const START_HOUR = 11;
+const START_HOUR = 17;
 const END_HOUR = 23;
 
 // =======================
@@ -349,7 +349,7 @@ cron.schedule("*/3 * * * *", async () => {
   const currentHour = new Date().getHours();
 
   // ACTIVE HOURS (5PM - 11PM)
-  if (currentHour < 11 || currentHour > 23) {
+  if (currentHour < 17 || currentHour > 23) {
     console.log("⛔ Outside active hours (5PM–11PM)");
     return;
   }
@@ -372,7 +372,7 @@ cron.schedule("*/3 * * * *", async () => {
 setTimeout(() => {
   const hour = new Date().getHours();
 
-  if (hour >= 11 && hour <= 23) {
+  if (hour >= 17 && hour <= 23) {
     getLiveMatches();
     console.log("Football bot running...");
   }
