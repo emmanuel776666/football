@@ -14,7 +14,7 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 // LEAGUES
 // =======================
 
-const LEAGUES = "1-10";
+const LEAGUES = "1";
 
 // =======================
 // ACTIVE HOURS (5PM - 11PM)
@@ -65,7 +65,8 @@ async function getLiveMatches() {
       `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}`,
       {
         headers: {
-          "x-apisports-key": API_KEY
+          "x-apisports-key": API_KEY,
+           "x-apisports-host": "v3.football.api-sports.io"
         }
       }
     );
