@@ -20,7 +20,7 @@ const LEAGUES = "1";
 // ACTIVE HOURS (5PM - 11PM)
 // =======================
 
-const START_HOUR = 17;
+const START_HOUR = 11;
 const END_HOUR = 23;
 
 // =======================
@@ -65,8 +65,7 @@ async function getLiveMatches() {
       `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}`,
       {
         headers: {
-          "x-apisports-key": API_KEY,
-           "x-apisports-host": "v3.football.api-sports.io"
+          "x-apisports-key": API_KEY
         }
       }
     );
@@ -350,7 +349,7 @@ cron.schedule("*/3 * * * *", async () => {
   const currentHour = new Date().getHours();
 
   // ACTIVE HOURS (5PM - 11PM)
-  if (currentHour < 17 || currentHour > 23) {
+  if (currentHour < 11 || currentHour > 23) {
     console.log("⛔ Outside active hours (5PM–11PM)");
     return;
   }
@@ -373,7 +372,7 @@ cron.schedule("*/3 * * * *", async () => {
 setTimeout(() => {
   const hour = new Date().getHours();
 
-  if (hour >= 17 && hour <= 23) {
+  if (hour >= 11 && hour <= 23) {
     getLiveMatches();
     console.log("Football bot running...");
   }
