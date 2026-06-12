@@ -25,7 +25,7 @@ let previousScores = {};
 let postedHalfTime = {};
 let postedKickOff = {};
 let postedFullTime = {};
-let goalPosts = {};
+
 
 let isCheckingLive = false;
 
@@ -137,58 +137,20 @@ ${home} 0-0 ${away}`;
         await postToFacebook(fullTimeMessage);
 
         postedFullTime[fixtureId] = true;
-      }
+      } 
+      
+if (previousScores[fixtureId] !== currentScore) {
 
-      if (previousScores[fixtureId] !== currentScore) {
-
-        const oldScore = previousScores[fixtureId];
-
-        const oldTotal = oldScore
-          .split("-")
-          .reduce((a, b) => Number(a) + Number(b), 0);
-
-        const newTotal = currentScore
-          .split("-")
-          .reduce((a, b) => Number(a) + Number(b), 0);
-
-        if (newTotal < oldTotal) {
-
-          const postId = goalPosts[fixtureId];
-
-          if (postId) {
-
-            const cancelMessage =
-`❌ GOAL CANCELLED (VAR)
-
-🎌 Live: ${home} ${homeGoals}-${awayGoals} ${away}
-
-⏱ ${minute}`;
-
-            await editFacebookPost(postId, cancelMessage);
-          }
-
-        } else {
-
-          const message =
+  const message =
 `🚩 Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-⚽ GOAL!⏱ ${minute}`;
+⚽ GOAL! ⏱ ${minute}`;
 
-          const postId = await postToFacebook(message);
+  await postToFacebook(message);
 
-          goalPosts[fixtureId] = postId;
-        }
-
-        previousScores[fixtureId] = currentScore;
-      }
-
-    }
-
-  } catch (error) {
-    console.log(error.message);
-  }
-
+  previousScores[fixtureId] = currentScore;
 }
+      
 
 // =======================
 // POST TO ONE PAGE
@@ -255,30 +217,6 @@ async function postToFacebookBothPages(message) {
 
 }
 
-// =======================
-// EDIT POST
-// =======================
-
-async function editFacebookPost(postId, message) {
-
-  try {
-
-    await axios.post(
-      `https://graph.facebook.com/${postId}`,
-      null,
-      {
-        params: {
-          message,
-          access_token: PAGE_ACCESS_TOKEN
-        }
-      }
-    );
-
-  } catch (error) {
-    console.log(error.message);
-  }
-
-}
 
 // =======================
 // TODAY FIXTURES
