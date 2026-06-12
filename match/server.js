@@ -111,8 +111,7 @@ async function getLiveMatches() {
       ) {
 
         const kickOffMessage =
-`🏳️ Kick Off!
-${home} 0-0 ${away}`;
+`🚩Kick Off!:${home} 0-0 ${away}`;
 
         await postToFacebook(kickOffMessage);
 
@@ -122,7 +121,7 @@ ${home} 0-0 ${away}`;
       if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
 
         const halfTimeMessage =
-`🚩:${home} ${homeGoals}-${awayGoals} ${away} 'HT'`;
+`🚩HT:${home} ${homeGoals}-${awayGoals} ${away}`;
 
         await postToFacebook(halfTimeMessage);
 
@@ -132,7 +131,7 @@ ${home} 0-0 ${away}`;
       if (status === "FINISHED" && !postedFullTime[fixtureId]) {
 
         const fullTimeMessage =
-`🏁:${home} ${homeGoals}-${awayGoals} ${away} 'FT'`;
+`🏁FT:${home} ${homeGoals}-${awayGoals} ${away}`;
 
         await postToFacebook(fullTimeMessage);
 
@@ -163,7 +162,7 @@ if (previousScores[fixtureId] !== currentScore) {
     const message =
 `🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-⚽ GOAL! ⏱ ${minute}`;
+🥅⚽ GOAL! ⏱ ${minute}`;
 
     await postToFacebook(message);
   }
@@ -326,7 +325,7 @@ async function postTodayFixtures() {
 // CRON JOBS (UNCHANGED)
 // =======================
 
-cron.schedule("*/7 * * * * *", async () => {
+cron.schedule("*/6 * * * * *", async () => {
   if (isCheckingLive) return;
 
   isCheckingLive = true;
