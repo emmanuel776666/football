@@ -20,7 +20,7 @@ const LEAGUES = "1";
 // ACTIVE HOURS (5PM - 11PM)
 // =======================
 
-const START_HOUR = 11;
+const START_HOUR = 17;
 const END_HOUR = 23;
 
 // =======================
@@ -125,7 +125,7 @@ async function getLiveMatches() {
       ) {
 
         const kickOffMessage =
-`🏳️Kick Off: ${home} 0-0 ${away}`;
+`🚩Kick Off: ${home} 0-0 ${away}`;
 
         await postToFacebook(kickOffMessage);
 
@@ -139,7 +139,7 @@ async function getLiveMatches() {
       ) {
 
         const halfTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} [HT]`;
+`🚩:${home} ${homeGoals}-${awayGoals} ${away} [HT]`;
 
         await postToFacebook(halfTimeMessage);
 
@@ -153,7 +153,7 @@ async function getLiveMatches() {
       ) {
 
         const fullTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
+`🚩:${home} ${homeGoals}-${awayGoals} ${away} [FT]`;
 
         await postToFacebook(fullTimeMessage);
 
@@ -349,7 +349,7 @@ cron.schedule("*/3 * * * *", async () => {
   const currentHour = new Date().getHours();
 
   // ACTIVE HOURS (5PM - 11PM)
-  if (currentHour < 11 || currentHour > 23) {
+  if (currentHour < 17 || currentHour > 23) {
     console.log("⛔ Outside active hours (5PM–11PM)");
     return;
   }
@@ -372,7 +372,7 @@ cron.schedule("*/3 * * * *", async () => {
 setTimeout(() => {
   const hour = new Date().getHours();
 
-  if (hour >= 11 && hour <= 23) {
+  if (hour >= 17 && hour <= 23) {
     getLiveMatches();
     console.log("Football bot running...");
   }
