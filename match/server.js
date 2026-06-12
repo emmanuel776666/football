@@ -151,7 +151,13 @@ if (previousScores[fixtureId] !== currentScore) {
   previousScores[fixtureId] = currentScore;
 }
       
+    }
 
+  } catch (error) {
+    console.log(error.message);
+  }
+
+}
 // =======================
 // POST TO ONE PAGE
 // =======================
