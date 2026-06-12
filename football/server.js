@@ -14,7 +14,7 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 // LEAGUES
 // =======================
 
-const LEAGUES = "1";
+const LEAGUES = "1-39";
 
 // =======================
 // ACTIVE HOURS (5PM - 11PM)
