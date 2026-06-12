@@ -122,7 +122,7 @@ ${home} 0-0 ${away}`;
       if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
 
         const halfTimeMessage =
-`${home} ${homeGoals}-${awayGoals} ${away} 'HT'`;
+`🚩:${home} ${homeGoals}-${awayGoals} ${away} 'HT'`;
 
         await postToFacebook(halfTimeMessage);
 
@@ -141,12 +141,32 @@ ${home} 0-0 ${away}`;
       
 if (previousScores[fixtureId] !== currentScore) {
 
-  const message =
+  const oldScore = previousScores[fixtureId];
+
+  const oldTotal = oldScore
+    .split("-")
+    .reduce((a, b) => Number(a) + Number(b), 0);
+
+  const newTotal = currentScore
+    .split("-")
+    .reduce((a, b) => Number(a) + Number(b), 0);
+
+  // Goal cancelled or correction
+  if (newTotal < oldTotal) {
+    previousScores[fixtureId] = currentScore;
+    continue;
+  }
+
+  // Real goal
+  if (newTotal > oldTotal) {
+
+    const message =
 `🚩 Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
 ⚽ GOAL! ⏱ ${minute}`;
 
-  await postToFacebook(message);
+    await postToFacebook(message);
+  }
 
   previousScores[fixtureId] = currentScore;
 }
@@ -272,7 +292,7 @@ async function postTodayFixtures() {
 };
 
 
-    let message = `🏳️ Today’s games:\n\n`;
+    let message = `🚩Today’s fixtures:\n\n`;
 
     for (const match of validMatches) {
 
