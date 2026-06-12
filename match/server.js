@@ -161,7 +161,7 @@ if (previousScores[fixtureId] !== currentScore) {
   if (newTotal > oldTotal) {
 
     const message =
-`🚩 Live: ${home} ${homeGoals}-${awayGoals} ${away}
+`🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
 ⚽ GOAL! ⏱ ${minute}`;
 
