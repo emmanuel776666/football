@@ -111,7 +111,10 @@ async function getLiveMatches() {
       ) {
 
         const kickOffMessage =
-`🚩Kick Off!:${home} 0-0 ${away}`;
+`🚩Kick Off!:${home} 0-0 ${away}
+
+📢 Enjoying the live updates? Follow the page and join thousands of fans keeping up with every goal and key moment. 🔥
+#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
 
         await postToFacebook(kickOffMessage);
 
