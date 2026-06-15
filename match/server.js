@@ -1,4 +1,4 @@
-require("dotenv").config();
+halfTimeMessageotenv").config();
 
 const axios = require("axios");
 const cron = require("node-cron");
@@ -124,7 +124,10 @@ async function getLiveMatches() {
       if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
 
         const halfTimeMessage =
-`🚩HT:${home} ${homeGoals}-${awayGoals} ${away}`;
+`🚩HT:${home} ${homeGoals}-${awayGoals} ${away}
+
+📢 If you love football updates as much as we do, a follow would mean a lot. More live action coming your way!
+#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
 
         await postToFacebook(halfTimeMessage);
 
@@ -134,7 +137,10 @@ async function getLiveMatches() {
       if (status === "FINISHED" && !postedFullTime[fixtureId]) {
 
         const fullTimeMessage =
-`🏁FT:${home} ${homeGoals}-${awayGoals} ${away}`;
+`🏁FT:${home} ${homeGoals}-${awayGoals} ${away}
+
+📢 Stay with us for instant goals, match highlights, and live football updates. Follow the page for more!
+#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
 
         await postToFacebook(fullTimeMessage);
 
@@ -165,7 +171,10 @@ if (previousScores[fixtureId] !== currentScore) {
     const message =
 `🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-🥅⚽ GOAL! ⏱ ${minute}`;
+🥅⚽ GOAL! ⏱ ${minute}
+
+📢 Enjoying the live updates? Follow the page and join thousands of fans keeping up with every goal and key moment. 🔥
+#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
 
     await postToFacebook(message);
   }
