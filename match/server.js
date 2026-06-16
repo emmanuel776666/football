@@ -321,10 +321,10 @@ async function postTodayFixtures() {
         }
       );
 
-      message += `${flag} ${home} vs ${away} (${matchTime})\n`;
+      message += `${flag} ${home} 🆚  ${away} (${matchTime})\n`;
     }
     // Add caption here
-message += `\n\nMy dear you won't die if you follow and like😜. Which match are you watching today?\n📢 Follow for live goals, scores, and match updates.\n#MatchLoop #GoalAlert #LiveFootball`;
+message += `\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#MatchLoop #GoalAlert #LiveFootball`;
 
     // ✅ ONLY CHANGE HERE
     await postToFacebookBothPages(message);
