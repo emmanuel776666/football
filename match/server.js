@@ -113,6 +113,8 @@ async function getLiveMatches() {
         const kickOffMessage =
 `🚩Kick Off!:${home} 0-0 ${away}
 
+
+
 📢 Enjoying the live updates? Follow the page and join thousands of fans keeping up with every goal and key moment. 🔥
 #MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
 
@@ -126,6 +128,8 @@ async function getLiveMatches() {
         const halfTimeMessage =
 `🚩HT:${home} ${homeGoals}-${awayGoals} ${away}
 
+
+
 📢 If you love football updates as much as we do, a follow would mean a lot. More live action coming your way!
 #MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
 
@@ -138,6 +142,8 @@ async function getLiveMatches() {
 
         const fullTimeMessage =
 `🏁FT:${home} ${homeGoals}-${awayGoals} ${away}
+
+
 
 📢 Stay with us for instant goals, match highlights, and live football updates. Follow the page for more!
 #MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
@@ -171,7 +177,9 @@ if (previousScores[fixtureId] !== currentScore) {
     const message =
 `🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-🥅⚽ GOAL! ⏱ ${minute}
+⚽ GOAL!  ${minute}
+
+
 
 📢 Enjoying the live updates? Follow the page and join thousands of fans keeping up with every goal and key moment. 🔥
 #MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
@@ -324,7 +332,7 @@ async function postTodayFixtures() {
       message += `${flag} ${home} 🆚  ${away} (${matchTime})\n`;
     }
     // Add caption here
-message += `\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#MatchLoop #GoalAlert #LiveFootball`;
+message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#MatchLoop #GoalAlert #LiveFootball`;
 
     // ✅ ONLY CHANGE HERE
     await postToFacebookBothPages(message);
