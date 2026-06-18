@@ -126,12 +126,7 @@ async function getLiveMatches() {
       if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
 
         const halfTimeMessage =
-`🚩HT:${home} ${homeGoals}-${awayGoals} ${away}
-
-
-
-📢 If you love football updates as much as we do, a follow would mean a lot. More live action coming your way!
-#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
+`🚩HT:${home} ${homeGoals}-${awayGoals} ${away}`;
 
         await postToFacebook(halfTimeMessage);
 
@@ -177,12 +172,7 @@ if (previousScores[fixtureId] !== currentScore) {
     const message =
 `🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
-⚽ GOAL!  ${minute}
-
-
-
-📢 Enjoying the live updates? Follow the page and join thousands of fans keeping up with every goal and key moment. 🔥
-#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
+⚽ GOAL!  ${minute}`;
 
     await postToFacebook(message);
   }
