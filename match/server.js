@@ -136,12 +136,7 @@ async function getLiveMatches() {
       if (status === "FINISHED" && !postedFullTime[fixtureId]) {
 
         const fullTimeMessage =
-`🏁FT:${home} ${homeGoals}-${awayGoals} ${away}
-
-
-
-📢 Stay with us for instant goals, match highlights, and live football updates. Follow the page for more!
-#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
+`🏁FT:${home} ${homeGoals}-${awayGoals} ${away}`;
 
         await postToFacebook(fullTimeMessage);
 
