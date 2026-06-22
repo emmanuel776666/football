@@ -296,7 +296,7 @@ async function postTodayFixtures() {
 };
 
 
-    let message = `🚩Today’s fixtures:\n\n`;
+    let message = `🚩Today’s fixtures:\n\n🤔 What are your predictions?`;
 
     for (const match of validMatches) {
 
@@ -317,7 +317,7 @@ async function postTodayFixtures() {
       message += `${flag} ${home} 🆚  ${away} (${matchTime})\n`;
     }
     // Add caption here
-message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#MatchLoop #GoalAlert #LiveFootball\n@Match of the Day @Fabrizio Romano @The18 @ESPN FC @Onefootball`;
+message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#FabrizioRomano #ESPNFC #Onefootball #The18 #433`;
 
     // ✅ ONLY CHANGE HERE
     await postToFacebookBothPages(message);
