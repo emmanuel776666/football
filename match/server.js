@@ -317,7 +317,7 @@ async function postTodayFixtures() {
       message += `${flag} ${home} 🆚  ${away} (${matchTime})\n`;
     }
     // Add caption here
-message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#MatchLoop #GoalAlert #LiveFootball`;
+message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#MatchLoop #GoalAlert #LiveFootball\n@Match of the Day @Fabrizio Romano @The18 @ESPN FC @Onefootball`;
 
     // ✅ ONLY CHANGE HERE
     await postToFacebookBothPages(message);
