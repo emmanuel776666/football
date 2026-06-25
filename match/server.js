@@ -296,7 +296,7 @@ async function postTodayFixtures() {
 };
 
 
-    let message = `🚩Today’s fixtures:\n🤔 What are your predictions???\n`;
+    let message = `🚩Today’s fixtures:\n🤔 What are your predictions???\n\n`;
 
     for (const match of validMatches) {
 
