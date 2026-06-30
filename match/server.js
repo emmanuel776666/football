@@ -3,6 +3,7 @@ require("dotenv").config();
 const axios = require("axios");
 const cron = require("node-cron");
 const express = require("express");
+const path = require("path");
 
 const app = express();
 
@@ -141,40 +142,38 @@ async function getLiveMatches() {
         await postToFacebook(fullTimeMessage);
 
         postedFullTime[fixtureId] = true;
-      } 
-      
-if (previousScores[fixtureId] !== currentScore) {
+      }
 
-  const oldScore = previousScores[fixtureId];
+      if (previousScores[fixtureId] !== currentScore) {
 
-  const oldTotal = oldScore
-    .split("-")
-    .reduce((a, b) => Number(a) + Number(b), 0);
+        const oldScore = previousScores[fixtureId];
 
-  const newTotal = currentScore
-    .split("-")
-    .reduce((a, b) => Number(a) + Number(b), 0);
+        const oldTotal = oldScore
+          .split("-")
+          .reduce((a, b) => Number(a) + Number(b), 0);
 
-  // Goal cancelled or correction
-  if (newTotal < oldTotal) {
-    previousScores[fixtureId] = currentScore;
-    continue;
-  }
+        const newTotal = currentScore
+          .split("-")
+          .reduce((a, b) => Number(a) + Number(b), 0);
 
-  // Real goal
-  if (newTotal > oldTotal) {
+        if (newTotal < oldTotal) {
+          previousScores[fixtureId] = currentScore;
+          continue;
+        }
 
-    const message =
+        if (newTotal > oldTotal) {
+
+          const message =
 `🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
 
 ⚽ GOAL!  ${minute}`;
 
-    await postToFacebook(message);
-  }
+          await postToFacebook(message);
+        }
 
-  previousScores[fixtureId] = currentScore;
-}
-      
+        previousScores[fixtureId] = currentScore;
+      }
+
     }
 
   } catch (error) {
@@ -281,22 +280,21 @@ async function postTodayFixtures() {
     // =======================
 
     const countryFlags = {
-  "WC": "🌍",
-  "CL": "🇪🇺",
-  "BL1": "🇩🇪",
-  "DED": "🇳🇱",
-  "BSA": "🇧🇷",
-  "PD": "🇪🇸",
-  "FL1": "🇫🇷",
-  "ELC": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F",
-  "PPL": "🇵🇹",
-  "EC": "🇪🇺",
-  "SA": "🇮🇹",
-  "PL": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F"
-};
+      "WC": "🌍",
+      "CL": "🇪🇺",
+      "BL1": "🇩🇪",
+      "DED": "🇳🇱",
+      "BSA": "🇧🇷",
+      "PD": "🇪🇸",
+      "FL1": "🇫🇷",
+      "ELC": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F",
+      "PPL": "🇵🇹",
+      "EC": "🇪🇺",
+      "SA": "🇮🇹",
+      "PL": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F"
+    };
 
-
-    let message = `🚩Today’s fixtures:\n🤔 What are your predictions???\n\n`;
+    let message = `🚩Today's fixtures:\n🤔 What are your predictions???\n\n`;
 
     for (const match of validMatches) {
 
@@ -316,10 +314,9 @@ async function postTodayFixtures() {
 
       message += `${flag} ${home} 🆚  ${away} (${matchTime})\n`;
     }
-    // Add caption here
-message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#WorldCup2026 #LiveScores #FootballUpdates #Fixtures #FabrizioRomano #ESPNFC #Onefootball #The18 `;
 
-    // ✅ ONLY CHANGE HERE
+    message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#WorldCup2026 #LiveScores #FootballUpdates #Fixtures #FabrizioRomano #ESPNFC #Onefootball #The18 `;
+
     await postToFacebookBothPages(message);
 
   } catch (error) {
@@ -329,7 +326,7 @@ message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, s
 }
 
 // =======================
-// CRON JOBS (UNCHANGED)
+// CRON JOBS
 // =======================
 
 cron.schedule("*/6 * * * * *", async () => {
@@ -352,10 +349,20 @@ setTimeout(() => {
   getLiveMatches();
 }, 60000);
 
-const PORT = process.env.PORT || 3000;
+// =======================
+// SERVER
+// =======================
+
+const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
   res.send("Football bot is running...");
 });
 
-app.listen(PORT);
+app.get("/privacy-policy", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "privacy-policy-url.html"));
+});
+
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("Server running on port " + PORT);
+});
