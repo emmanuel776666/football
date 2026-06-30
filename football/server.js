@@ -10,436 +10,413 @@ const API_KEY = process.env.API_KEY;
 const PAGE_ID = process.env.PAGE_ID;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 
-// =======================
-// LEAGUES
-// =======================
-
 const LEAGUES = "1-39";
 
-// =======================
-// MEMORY
-// =======================
+// track what we've already posted
 let isCheckingLive = false;
 let previousScores = {};
-let postedHalfTime = {};
-let goalPosts = {};
 let postedKickOff = {};
+let postedHalfTime = {};
 let postedFullTime = {};
+let goalPosts = {};
 let playerGoals = {};
+let requestsRemaining = 100;
 
-// =======================
-// RATE LIMIT INFO
-// =======================
-let lastRequestInfo = {
-  remaining: null,
-  reset: null
-};
+// ─── HUMAN-SOUNDING MESSAGES ────────────────────────────────────────────────
 
-// =======================
-// RANDOM HELPERS
-// =======================
-
-function pick(arr) {
+function rand(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function kickOffIntros(home, away) {
-  return pick([
-    `🔔 IT'S GAME TIME! The whistle has blown!\n\n${home} ⚔️ ${away} — We are LIVE! 🟢`,
-    `🚀 AND WE ARE OFF! Brace yourselves folks!\n\n${home} vs ${away} — 0-0 | KICK OFF!`,
-    `🏟️ The stadium is ELECTRIC! Both teams are ready!\n\n${home} 🆚 ${away} — Let the battle begin! ⚡`,
-    `👟 The first whistle is blown! Football is HERE!\n\n${home} vs ${away} — 0-0 | LET'S GO! 🔥`,
-    `🎯 KICK OFF ALERT! Don't miss a single moment!\n\n${home} ⚔️ ${away} — 0-0 | LIVE NOW! 📺`,
-  ]);
+function kickoffMsg(home, away, league) {
+  const intros = [
+    `We're underway! ${home} vs ${away} has just kicked off 🔔`,
+    `It's started! ${home} take on ${away} — let's see what happens 👀`,
+    `The ref blows the whistle and we are OFF! ${home} vs ${away} is live 🟢`,
+    `Game on! ${home} vs ${away} is underway right now 🏃`,
+    `Here we go! ${home} face ${away} — should be a good one tonight ⚽`,
+  ];
+  return `${rand(intros)}\n\n📍 ${league}\n⏱ 0-0 | KO\n\n🔔 Follow for live updates`;
 }
 
-function goalIntros(scorer, goalMinute, goalLabel) {
-  return pick([
-    `🚨 GOOOAL! What a moment! ${scorer} (${goalMinute})${goalLabel} 🔥`,
-    `⚽ IT'S IN THE NET! ${scorer} makes it happen! (${goalMinute})${goalLabel} 😱`,
-    `💥 SCREAMER! ${scorer} finds the back of the net! (${goalMinute})${goalLabel}`,
-    `🎉 GET IN! ${scorer} with the GOAL! (${goalMinute})${goalLabel} 🙌`,
-    `🔥 UNSTOPPABLE! ${scorer} scores! (${goalMinute})${goalLabel} 💪`,
-  ]);
+function goalMsg(home, hg, away, ag, scorer, minute, assist, label, league) {
+  const shouts = [
+    `GOAL! ${scorer} puts it in the back of the net`,
+    `That's a goal! ${scorer} finds the target`,
+    `GET IN! ${scorer} scores for ${hg > ag ? home : away}`,
+    `${scorer} with the finish — it's a goal!`,
+    `And it's in! ${scorer} breaks the deadlock`,
+  ];
+
+  const labelLine = label ? `\n🎩 ${label}` : "";
+  const assistLine = assist ? `\nAssist: ${assist} 👟` : "";
+
+  return (
+    `⚽ ${rand(shouts)} (${minute}')${labelLine}\n\n` +
+    `${home} ${hg} - ${ag} ${away}${assistLine}\n\n` +
+    `📍 ${league}\n🔔 Follow for more updates`
+  );
 }
 
-function htCaptions(home, homeGoals, away, awayGoals) {
-  const diff = homeGoals - awayGoals;
-  if (diff > 0) return `${home} heading into the break in control 💪 Can ${away} bounce back in the second half? 🤔`;
-  if (diff < 0) return `${away} lead at the break! ${home} need to find a way back 😤 Second half drama incoming? 🔥`;
-  return `All square at the break! ⚖️ Anyone's game in the second half — don't go anywhere! 👀`;
+function htMsg(home, hg, away, ag, league) {
+  const diff = hg - ag;
+  let comment;
+  if (diff > 1)
+    comment = rand([
+      `${home} well in control here. Second half to come.`,
+      `Dominant first half from ${home}. Can ${away} respond?`,
+    ]);
+  else if (diff === 1)
+    comment = rand([
+      `${home} edging it but nothing is settled yet.`,
+      `Tight game. ${home} shade it so far but ${away} still in this.`,
+    ]);
+  else if (diff === 0)
+    comment = rand([
+      `Level at the break. Both teams will fancy their chances.`,
+      `Goalless at half time. Second half could be interesting.`,
+      `Honours even so far. Plenty still to play for.`,
+    ]);
+  else if (diff === -1)
+    comment = rand([
+      `${away} in front at the break. ${home} need a reaction.`,
+      `${home} behind going into the second half. Comeback on?`,
+    ]);
+  else
+    comment = rand([
+      `${away} comfortable here. Tough evening for ${home}.`,
+      `${home} well off the pace in the first half.`,
+    ]);
+
+  return (
+    `🟡 HALF TIME\n\n${home} ${hg} - ${ag} ${away}\n\n` +
+    `${comment}\n\n📍 ${league}\n🔔 Follow for second half updates`
+  );
 }
 
-function ftCaptions(home, homeGoals, away, awayGoals) {
-  const diff = homeGoals - awayGoals;
-  if (diff > 0) return `${home} take all 3 points! 🏆 Another massive result! 🔥`;
-  if (diff < 0) return `${away} win it! What a result away from home! 🎉`;
-  return `They share the spoils! A point each — drama until the very end! ⚖️`;
+function ftMsg(home, hg, away, ag, league, isAet) {
+  const suffix = isAet ? " (AET)" : "";
+  const diff = hg - ag;
+  let comment;
+  if (diff > 1)
+    comment = rand([
+      `Comfortable win for ${home} in the end.`,
+      `${home} deserved that. Solid performance.`,
+    ]);
+  else if (diff === 1)
+    comment = rand([
+      `${home} just about edge it. Three points in the bag.`,
+      `Narrow win for ${home} but they'll take it.`,
+    ]);
+  else if (diff === 0)
+    comment = rand([
+      `A point each. Probably fair on the night.`,
+      `They couldn't be separated. One point apiece.`,
+    ]);
+  else if (diff === -1)
+    comment = rand([
+      `${away} nick it. Well done to them tonight.`,
+      `${home} fall short. ${away} take the three points.`,
+    ]);
+  else
+    comment = rand([
+      `${away} run out comfortable winners tonight.`,
+      `Heavy defeat for ${home}. Tough night.`,
+    ]);
+
+  return (
+    `🏁 FULL TIME${suffix}\n\n${home} ${hg} - ${ag} ${away}\n\n` +
+    `${comment}\n\n📍 ${league}`
+  );
 }
 
-const HASHTAGS = `#Football #LiveScores #GoalAlert #MatchLoop #LiveFootball #FBLive #Goals #FootballUpdates`;
+function varMsg(home, hg, away, ag, scorer, minute, league) {
+  return (
+    `VAR — Goal ruled out!\n\n` +
+    `${scorer}'s goal has been disallowed after a VAR check (${minute}')\n\n` +
+    `${home} ${hg} - ${ag} ${away}\n\n📍 ${league}`
+  );
+}
 
-// =======================
-// POST PHOTO TO FACEBOOK
-// =======================
+// ─── FACEBOOK HELPERS ────────────────────────────────────────────────────────
 
-async function postPhotoToFacebook(imageUrl, caption) {
+async function postPhoto(imageUrl, caption) {
   try {
-    const response = await axios.post(
+    const res = await axios.post(
       `https://graph.facebook.com/${PAGE_ID}/photos`,
       null,
-      {
-        params: {
-          url: imageUrl,
-          caption,
-          access_token: PAGE_ACCESS_TOKEN
-        }
-      }
+      { params: { url: imageUrl, caption, access_token: PAGE_ACCESS_TOKEN } }
     );
-    console.log(`📸 Photo post sent: ${response.data.id}`);
-    return response.data.id;
-  } catch (error) {
-    console.log("Photo post failed, falling back to text post:", error.message);
-    return postToFacebook(caption);
+    console.log(`📸 Posted with photo | ID: ${res.data.id}`);
+    return res.data.id;
+  } catch (err) {
+    console.log("Photo post failed, trying text post:", err.message);
+    return postText(caption);
   }
 }
 
-// =======================
-// FACEBOOK TEXT POST
-// =======================
-
-async function postToFacebook(message) {
+async function postText(message) {
   try {
-    const response = await axios.post(
+    const res = await axios.post(
       `https://graph.facebook.com/${PAGE_ID}/feed`,
       null,
-      {
-        params: {
-          message,
-          access_token: PAGE_ACCESS_TOKEN
-        }
-      }
+      { params: { message, access_token: PAGE_ACCESS_TOKEN } }
     );
-    return response.data.id;
-  } catch (error) {
-    console.log(error.message);
+    console.log(`📝 Text post sent | ID: ${res.data.id}`);
+    return res.data.id;
+  } catch (err) {
+    console.log("Text post failed:", err.message);
   }
 }
 
-// =======================
-// EDIT POST
-// =======================
-
-async function editFacebookPost(postId, message) {
+async function editPost(postId, message) {
   try {
     await axios.post(
       `https://graph.facebook.com/${postId}`,
       null,
-      {
-        params: {
-          message,
-          access_token: PAGE_ACCESS_TOKEN
-        }
-      }
+      { params: { message, access_token: PAGE_ACCESS_TOKEN } }
     );
-  } catch (error) {
-    console.log(error.message);
+    console.log(`✏️ Post edited | ID: ${postId}`);
+  } catch (err) {
+    console.log("Edit post failed:", err.message);
   }
 }
 
-// =======================
-// MAIN FUNCTION
-// =======================
+// ─── DAILY FIXTURES ──────────────────────────────────────────────────────────
 
-async function getLiveMatches() {
-
+async function postDailyFixtures() {
   try {
-
-    const response = await axios.get(
-      `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}`,
-      {
-        headers: {
-          "x-apisports-key": API_KEY
-        }
-      }
+    const res = await axios.get(
+      `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}&next=20`,
+      { headers: { "x-apisports-key": API_KEY } }
     );
 
-    const requestsLeft =
-      response.headers["x-ratelimit-requests-remaining"] ||
-      response.headers["x-requests-available"] ||
-      "N/A";
+    const fixtures = res.data.response;
+    if (!fixtures || !fixtures.length) {
+      console.log("No upcoming fixtures to post");
+      return;
+    }
 
-    const resetTime =
-      response.headers["x-ratelimit-requests-reset"] ||
-      response.headers["x-requestcounter-reset"] ||
-      "N/A";
+    const now = new Date();
+    const upcoming = fixtures.filter(f => {
+      const ko = new Date(f.fixture.date);
+      return ko > now;
+    });
 
-    lastRequestInfo.remaining = requestsLeft;
-    lastRequestInfo.reset = resetTime;
+    if (!upcoming.length) return;
 
-    console.log(`📊 Requests Left: ${requestsLeft}`);
-    console.log(`⏳ Reset Time: ${resetTime}`);
+    let lines = `Here are today's fixtures coming up 📋\n\n`;
+    for (const f of upcoming) {
+      const ko = new Date(f.fixture.date);
+      const time = ko.toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Lagos"
+      });
+      lines += `${f.teams.home.name} vs ${f.teams.away.name} — ${time}\n`;
+    }
+    lines += `\nAll times WAT 🕐\n🔔 Follow for live scores and goal alerts`;
 
-    const matches = response.data.response;
+    await postText(lines);
+    console.log("📅 Daily fixtures posted");
+  } catch (err) {
+    console.log("Fixtures post failed:", err.message);
+  }
+}
 
+// ─── MAIN LIVE MATCH LOOP ────────────────────────────────────────────────────
+
+async function checkMatches() {
+  try {
+    // back off if rate limit is dangerously low
+    if (requestsRemaining !== null && requestsRemaining < 5) {
+      console.log(`⚠️ Rate limit low (${requestsRemaining} left) — skipping this cycle`);
+      return;
+    }
+
+    const res = await axios.get(
+      `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}`,
+      { headers: { "x-apisports-key": API_KEY } }
+    );
+
+    // track remaining requests
+    const remaining =
+      res.headers["x-ratelimit-requests-remaining"] ||
+      res.headers["x-requests-available"];
+    if (remaining !== undefined) requestsRemaining = Number(remaining);
+
+    console.log(`📊 Requests left: ${requestsRemaining}`);
+
+    const matches = res.data.response;
     if (!matches.length) {
-      console.log("No live matches");
+      console.log("No live matches right now");
       return;
     }
 
     for (const match of matches) {
-
-      const fixtureId = match.fixture.id;
-
+      const id = match.fixture.id;
       const home = match.teams.home.name;
       const away = match.teams.away.name;
       const homeLogo = match.teams.home.logo;
       const awayLogo = match.teams.away.logo;
       const leagueLogo = match.league.logo;
-      const leagueName = match.league.name;
-      const leagueCountry = match.league.country;
-
-      const homeGoals = match.goals.home ?? 0;
-      const awayGoals = match.goals.away ?? 0;
-      const currentScore = `${homeGoals}-${awayGoals}`;
-
+      const league = `${match.league.name} — ${match.league.country}`;
+      const hg = match.goals.home ?? 0;
+      const ag = match.goals.away ?? 0;
+      const score = `${hg}-${ag}`;
       const elapsed = match.fixture.status.elapsed ?? "";
-      const statusShort = match.fixture.status.short;
+      const status = match.fixture.status.short;
 
-      if (!previousScores[fixtureId]) {
-        previousScores[fixtureId] = currentScore;
-      }
+      if (!previousScores[id]) previousScores[id] = score;
 
-      // =======================
       // KICK OFF
-      // =======================
-      if (statusShort === "1H" && elapsed <= 1 && !postedKickOff[fixtureId]) {
-
-        const caption =
-`${kickOffIntros(home, away)}
-
-🏆 ${leagueName} | ${leagueCountry}
-⏱️ Minute: 0' | Score: 0 - 0
-
-📢 Follow for live goals & updates!
-${HASHTAGS}`;
-
-        await postPhotoToFacebook(leagueLogo, caption);
-        postedKickOff[fixtureId] = true;
-        console.log(`🟢 Kick-off posted: ${home} vs ${away}`);
+      if (status === "1H" && elapsed <= 1 && !postedKickOff[id]) {
+        const caption = kickoffMsg(home, away, league);
+        await postPhoto(leagueLogo, caption);
+        postedKickOff[id] = true;
       }
 
-      // =======================
       // HALF TIME
-      // =======================
-      if (statusShort === "HT" && !postedHalfTime[fixtureId]) {
-
-        const caption =
-`🔔 HALF TIME!
-
-🏟️ ${home} ${homeGoals} - ${awayGoals} ${away}
-
-${htCaptions(home, homeGoals, away, awayGoals)}
-
-🏆 ${leagueName} | ${leagueCountry}
-${HASHTAGS}`;
-
-        await postPhotoToFacebook(leagueLogo, caption);
-        postedHalfTime[fixtureId] = true;
-        console.log(`🟡 Half-time posted: ${home} ${homeGoals}-${awayGoals} ${away}`);
+      if (status === "HT" && !postedHalfTime[id]) {
+        const caption = htMsg(home, hg, away, ag, league);
+        await postPhoto(leagueLogo, caption);
+        postedHalfTime[id] = true;
       }
 
-      // =======================
       // FULL TIME
-      // =======================
-      if ((statusShort === "FT" || statusShort === "AET") && !postedFullTime[fixtureId]) {
-
-        const aet = statusShort === "AET" ? " (AET)" : "";
-
-        const caption =
-`🏁 FULL TIME${aet}!
-
-🏟️ ${home} ${homeGoals} - ${awayGoals} ${away}
-
-${ftCaptions(home, homeGoals, away, awayGoals)}
-
-🏆 ${leagueName} | ${leagueCountry}
-📢 Follow for more live updates!
-${HASHTAGS}`;
-
-        await postPhotoToFacebook(leagueLogo, caption);
-        postedFullTime[fixtureId] = true;
-        console.log(`🔴 Full-time posted: ${home} ${homeGoals}-${awayGoals} ${away}`);
+      if ((status === "FT" || status === "AET") && !postedFullTime[id]) {
+        const caption = ftMsg(home, hg, away, ag, league, status === "AET");
+        await postPhoto(leagueLogo, caption);
+        postedFullTime[id] = true;
       }
 
-      // =======================
       // SCORE CHANGE
-      // =======================
-      if (previousScores[fixtureId] !== currentScore) {
+      if (previousScores[id] !== score) {
+        const oldTotal = previousScores[id].split("-").reduce((a, b) => Number(a) + Number(b), 0);
+        const newTotal = score.split("-").reduce((a, b) => Number(a) + Number(b), 0);
 
-        const oldScore = previousScores[fixtureId];
-        const oldTotal = oldScore.split("-").reduce((a, b) => Number(a) + Number(b), 0);
-        const newTotal = currentScore.split("-").reduce((a, b) => Number(a) + Number(b), 0);
-
-        // GOAL CANCELLED (VAR)
+        // VAR — goal cancelled
         if (newTotal < oldTotal) {
-
-          const postId = goalPosts[fixtureId];
-
+          const postId = goalPosts[id];
           if (postId) {
-
-            let cancelledScorer = "Unknown Player";
-            let cancelledMinute = elapsed;
+            let scorer = "Unknown";
+            let minute = elapsed;
             const events = match.events || [];
-            const cancelledGoal = [...events].reverse().find(e =>
+            const varEvent = [...events].reverse().find(e =>
               e.type === "Var" || e.detail === "Goal Disallowed"
             );
-
-            if (cancelledGoal) {
-              if (cancelledGoal.player?.name) cancelledScorer = cancelledGoal.player.name;
-              if (cancelledGoal.time?.elapsed) cancelledMinute = cancelledGoal.time.elapsed;
+            if (varEvent) {
+              if (varEvent.player?.name) scorer = varEvent.player.name;
+              if (varEvent.time?.elapsed) minute = varEvent.time.elapsed;
             }
-
-            const cancelMessage =
-`❌ GOAL RULED OUT! VAR steps in! 📺
-
-🧐 ${cancelledScorer}'s goal is DISALLOWED (${cancelledMinute}')
-
-🔴 VAR Review Complete — No Goal!
-🏟️ ${home} ${homeGoals} - ${awayGoals} ${away} | ⏱️ ${elapsed}'
-
-🏆 ${leagueName}
-${HASHTAGS}`;
-
-            await editFacebookPost(postId, cancelMessage);
-            console.log(`❌ VAR cancellation posted`);
+            await editPost(postId, varMsg(home, hg, away, ag, scorer, minute, league));
           }
-
         }
 
         // NEW GOAL
-        else if (currentScore !== "0-0") {
-
-          let scorer = "Unknown Player";
+        else if (newTotal > oldTotal) {
+          let scorer = "Unknown";
           let assist = null;
-          let goalLabel = "";
-          let goalMinute = `${elapsed}'`;
-          let scoringTeamLogo = leagueLogo;
+          let minute = `${elapsed}`;
+          let label = "";
+          let scoringLogo = leagueLogo;
 
           const events = match.events || [];
-          const latestGoal = [...events].reverse().find(e => e.type === "Goal");
+          const goal = [...events].reverse().find(e => e.type === "Goal");
 
-          if (latestGoal) {
-            if (latestGoal.player?.name) scorer = latestGoal.player.name;
-            if (latestGoal.assist?.name) assist = latestGoal.assist.name;
-            if (latestGoal.time?.extra) {
-              goalMinute = `${latestGoal.time.elapsed}+${latestGoal.time.extra}'`;
-            }
+          if (goal) {
+            if (goal.player?.name) scorer = goal.player.name;
+            if (goal.assist?.name) assist = goal.assist.name;
+            if (goal.time?.extra) minute = `${goal.time.elapsed}+${goal.time.extra}`;
+            else if (goal.time?.elapsed) minute = `${goal.time.elapsed}`;
 
-            if (latestGoal.player?.name) {
-              const playerName = latestGoal.player.name;
-              if (!playerGoals[fixtureId]) playerGoals[fixtureId] = {};
-              if (!playerGoals[fixtureId][playerName]) playerGoals[fixtureId][playerName] = 0;
-              playerGoals[fixtureId][playerName]++;
-              const totalGoals = playerGoals[fixtureId][playerName];
-              if (totalGoals === 2) goalLabel = " 🎩 BRACE!";
-              else if (totalGoals === 3) goalLabel = " 🎩🎩🎩 HAT TRICK!";
-            }
+            // figure out which team scored for logo
+            const prevHome = Number(previousScores[id].split("-")[0]);
+            if (hg > prevHome) scoringLogo = homeLogo;
+            else scoringLogo = awayLogo;
 
-            // Use scoring team's logo
-            const newHome = currentScore.split("-")[0];
-            const prevHome = oldScore.split("-")[0];
-            if (Number(newHome) > Number(prevHome)) {
-              scoringTeamLogo = homeLogo;
-            } else {
-              scoringTeamLogo = awayLogo;
+            // brace / hat trick tracking
+            if (goal.player?.name) {
+              if (!playerGoals[id]) playerGoals[id] = {};
+              playerGoals[id][scorer] = (playerGoals[id][scorer] || 0) + 1;
+              const tally = playerGoals[id][scorer];
+              if (tally === 2) label = "Brace";
+              else if (tally === 3) label = "Hat-trick";
             }
           }
 
-          const assistLine = assist
-            ? `🎯 Assist: ${assist}`
-            : `🎯 Assist: None`;
-
-          const caption =
-`${goalIntros(scorer, goalMinute, goalLabel)}
-
-🏟️ ${home} ${homeGoals} - ${awayGoals} ${away}
-${assistLine}
-⏱️ Minute: ${goalMinute}
-
-🏆 ${leagueName} | ${leagueCountry}
-📢 Follow for every goal & update!
-${HASHTAGS}`;
-
-          const postId = await postPhotoToFacebook(scoringTeamLogo, caption);
-          goalPosts[fixtureId] = postId;
-          console.log(`⚽ Goal posted: ${scorer} | ${home} ${homeGoals}-${awayGoals} ${away}`);
+          const caption = goalMsg(home, hg, away, ag, scorer, minute, assist, label, league);
+          const postId = await postPhoto(scoringLogo, caption);
+          goalPosts[id] = postId;
+          console.log(`⚽ Goal: ${scorer} | ${home} ${hg}-${ag} ${away}`);
         }
 
-        previousScores[fixtureId] = currentScore;
+        previousScores[id] = score;
       }
     }
-
-  } catch (error) {
-    if (error.response) {
-      console.log(error.response.data);
+  } catch (err) {
+    if (err.response) {
+      console.log("API error:", err.response.data);
     } else {
-      console.log(error.message);
+      console.log("Error:", err.message);
     }
   }
 }
 
-// =======================
-// CRON (EVERY 3 MINUTES)
-// =======================
+// ─── SCHEDULES ────────────────────────────────────────────────────────────────
 
+// check live matches every 3 minutes
 cron.schedule("*/3 * * * *", async () => {
   if (isCheckingLive) return;
   isCheckingLive = true;
   try {
-    await getLiveMatches();
+    await checkMatches();
   } finally {
     isCheckingLive = false;
   }
 });
 
-// =======================
-// RUN IMMEDIATELY ON START
-// =======================
+// post today's fixtures every day at 8 AM (WAT)
+cron.schedule("0 7 * * *", () => {
+  postDailyFixtures();
+});
 
-console.log("⚽ Football bot running 24/7...");
-getLiveMatches();
+// run immediately on startup
+console.log("⚽ Bot started");
+checkMatches();
 
-// =======================
-// SERVER
-// =======================
+// ─── SERVER ───────────────────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
-  res.send("⚽ Football bot is live and running!");
+  res.send("Bot is running");
 });
 
 app.get("/test", async (req, res) => {
-  const testCaption =
-`✅ BOT TEST POST!
+  const msg =
+    `Test post from the page 👋\n\n` +
+    `The bot is live and connected. Goal alerts, kick-off and full-time updates are all running automatically.\n\n` +
+    `🔔 Follow the page so you don't miss a thing`;
 
-⚽ Your football bot is LIVE and fully connected! 🎉
-🚩 Ready to post kick-offs, goals, assists, half-time & full-time updates automatically to this page!
+  const img = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Association_football_pitches_around_the_world.jpg/640px-Association_football_pitches_around_the_world.jpg";
+  const postId = await postPhoto(img, msg);
+  res.send(postId ? `Done — post ID: ${postId}` : "Failed — check your token and page ID");
+});
 
-📢 Follow for live football updates!
-#Football #LiveScores #GoalAlert #MatchLoop`;
+app.get("/fixtures", async (req, res) => {
+  await postDailyFixtures();
+  res.send("Fixtures posted");
+});
 
-  const testImage = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Association_football_pitches_around_the_world.jpg/640px-Association_football_pitches_around_the_world.jpg";
-
-  const postId = await postPhotoToFacebook(testImage, testCaption);
-  if (postId) {
-    res.send(`✅ Test post sent with image! Post ID: ${postId}`);
-  } else {
-    res.send("❌ Post failed — check PAGE_ID and PAGE_ACCESS_TOKEN.");
-  }
+app.get("/status", (req, res) => {
+  res.json({
+    status: "running",
+    requestsRemaining,
+    matchesTracked: Object.keys(previousScores).length,
+  });
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Running on port ${PORT}`);
 });
