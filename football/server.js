@@ -359,6 +359,12 @@ function sleepUntil5pmWAT() {
   return target;
 }
 
+// keep Render awake — ping self every 10 minutes
+const SELF_URL = process.env.RENDER_URL || "https://football-iq5r.onrender.com";
+setInterval(() => {
+  axios.get(SELF_URL).catch(() => {});
+}, 10 * 60 * 1000);
+
 console.log("bot started");
 pausedUntil = sleepUntil5pmWAT();
 if (pausedUntil) {
