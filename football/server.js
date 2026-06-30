@@ -17,13 +17,6 @@ const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
 const LEAGUES = "1-39";
 
 // =======================
-// ACTIVE HOURS (5PM - 11PM)
-// =======================
-
-const START_HOUR = 17;
-const END_HOUR = 23;
-
-// =======================
 // MEMORY
 // =======================
 let isCheckingLive = false;
@@ -52,14 +45,6 @@ async function getLiveMatches() {
 
   try {
 
-    const currentHour = new Date().getHours();
-
-    // ONLY RUN BETWEEN 5PM - 11PM
-    if (currentHour < START_HOUR || currentHour > END_HOUR) {
-      console.log("⛔ Outside active hours (5PM–11PM)");
-      return;
-    }
-
     // FETCH MATCHES
     const response = await axios.get(
       `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}`,
@@ -69,10 +54,6 @@ async function getLiveMatches() {
         }
       }
     );
-
-    // =======================
-    // RATE LIMIT LOG (ONLY ADDITION)
-    // =======================
 
     const requestsLeft =
       response.headers["x-ratelimit-requests-remaining"] ||
@@ -160,7 +141,7 @@ async function getLiveMatches() {
         postedFullTime[fixtureId] = true;
       }
 
-      // SCORE CHANGE (UNCHANGED LOGIC)
+      // SCORE CHANGE
       if (previousScores[fixtureId] !== currentScore) {
 
         const oldScore = previousScores[fixtureId];
@@ -341,18 +322,10 @@ async function editFacebookPost(postId, message) {
 }
 
 // =======================
-// CRON (3 MINUTES ONLY)
+// CRON (EVERY 3 MINUTES)
 // =======================
 
 cron.schedule("*/3 * * * *", async () => {
-
-  const currentHour = new Date().getHours();
-
-  // ACTIVE HOURS (5PM - 11PM)
-  if (currentHour < 17 || currentHour > 23) {
-    console.log("⛔ Outside active hours (5PM–11PM)");
-    return;
-  }
 
   if (isCheckingLive) return;
 
@@ -365,18 +338,13 @@ cron.schedule("*/3 * * * *", async () => {
   }
 
 });
+
 // =======================
-// START DELAY
+// RUN IMMEDIATELY ON START
 // =======================
 
-setTimeout(() => {
-  const hour = new Date().getHours();
-
-  if (hour >= 17 && hour <= 23) {
-    getLiveMatches();
-    console.log("Football bot running...");
-  }
-}, 120000);
+console.log("Football bot running...");
+getLiveMatches();
 
 // =======================
 // SERVER
