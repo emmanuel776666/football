@@ -96,30 +96,41 @@ function rand(arr) {
 }
 
 function kickoffMsg(home, away, league) {
-  const lines = [
-    `We're underway! ${home} vs ${away} has just kicked off 🔔`,
-    `It's started! ${home} take on ${away} — let's see what happens 👀`,
-    `The ref blows the whistle and we are OFF! ${home} vs ${away} is live 🟢`,
-    `Game on! ${home} vs ${away} is underway right now 🏃`,
-    `Here we go! ${home} face ${away} — should be a good one ⚽`,
-  ];
-  return `${rand(lines)}\n\n📍 ${league}\n⏱ 0-0 | KO\n\n🔔 Follow for live updates`;
+  const opener = rand([
+    `We are UNDERWAY! ${home} vs ${away} is live! 🟢`,
+    `And we are OFF! ${home} take on ${away} — let's gooo ⚽`,
+    `The referee blows the whistle and it's GAME ON! ${home} vs ${away} 🔔`,
+    `Here we go! ${home} vs ${away} has just kicked off 👀`,
+    `Football is BACK! ${home} and ${away} are underway right now 🏟️`,
+    `It's started! ${home} vs ${away} — who's backing who? Drop it below 👇`,
+    `Kick off! ${home} host ${away} and we are live ⚽🔥`,
+    `The wait is over — ${home} vs ${away} is LIVE! 🚀`,
+  ]);
+  return `${opener}\n\n📍 ${league}\n⏱️ 0 - 0 | Kick Off\n\n🔔 Follow us for live goal alerts & updates!`;
 }
 
 function goalMsg(home, hg, away, ag, scorer, minute, assist, label, league) {
-  const lines = [
-    `GOAL! ${scorer} puts it in the back of the net`,
-    `That's a goal! ${scorer} finds the target`,
-    `GET IN! ${scorer} scores for ${hg > ag ? home : away}`,
-    `${scorer} with the finish — it's a goal!`,
-    `And it's in! ${scorer} makes it count`,
-  ];
-  const labelLine = label ? `\n🎩 ${label}` : "";
-  const assistLine = assist ? `\nAssist: ${assist} 👟` : "";
+  const scoringTeam = hg > ag ? home : away;
+  const opener = rand([
+    `GOAAAAL! ${scorer} scores for ${scoringTeam}! 🚨🚨🚨`,
+    `⚽ IT'S IN THE NET! ${scorer} with the finish! What a moment!`,
+    `GOAL! ${scorer} makes it count for ${scoringTeam}! GET IN! 🔥`,
+    `${scorer} SCORES! ${scoringTeam} are in front! 😤⚽`,
+    `And it's a GOAL! ${scorer} finds the back of the net! 🎯`,
+    `GET IN THERE! ${scorer} puts ${scoringTeam} ahead! Pure class 👏`,
+    `YESSS! ${scorer} with the goal! ${scoringTeam} will take that! ⚽💥`,
+    `What a finish from ${scorer}! ${scoringTeam} score! The crowd goes wild 🏟️🔥`,
+  ]);
+  const labelLine = label === "Hat-trick"
+    ? `\n🎩🎩🎩 HAT-TRICK for ${scorer}!! Absolutely unbelievable!!`
+    : label === "Brace"
+    ? `\n🔁 Brace for ${scorer}! Two goals and counting!`
+    : "";
+  const assistLine = assist ? `\n👟 Assist: ${assist}` : "";
   return (
-    `⚽ ${rand(lines)} (${minute}')${labelLine}\n\n` +
-    `${home} ${hg} - ${ag} ${away}${assistLine}\n\n` +
-    `📍 ${league}\n🔔 Follow for more updates`
+    `${opener} (${minute}')\n\n` +
+    `${home} ${hg} – ${ag} ${away}${assistLine}${labelLine}\n\n` +
+    `📍 ${league}\n🔔 Follow for more live updates!`
   );
 }
 
@@ -127,16 +138,36 @@ function htMsg(home, hg, away, ag, league) {
   const diff = hg - ag;
   let comment;
   if (diff > 1)
-    comment = rand([`${home} well in control here. Second half to come.`, `Dominant first half from ${home}. Can ${away} respond?`]);
+    comment = rand([
+      `${home} have been brilliant in that first half. ${away} will need something special after the break.`,
+      `Dominant from ${home}. ${away} have a mountain to climb in the second half.`,
+      `That was all ${home} in the first 45. ${away} have serious work to do.`,
+    ]);
   else if (diff === 1)
-    comment = rand([`${home} edging it but nothing is settled yet.`, `Tight game. ${home} shade it so far but ${away} still in this.`]);
+    comment = rand([
+      `${home} just about shade the first half but this is far from over. Expect a reaction from ${away}.`,
+      `Tight game. ${home} lead but ${away} are still very much in this.`,
+      `One goal in it at the break. ${away} will be looking to level things up quickly.`,
+    ]);
   else if (diff === 0)
-    comment = rand([`Level at the break. Both teams will fancy their chances.`, `Goalless at half time. Second half could be interesting.`, `Honours even so far. Plenty still to play for.`]);
+    comment = rand([
+      `Level pegging at the break! Both teams still have everything to play for.`,
+      `Nothing to separate them yet. The second half could be very interesting 👀`,
+      `Goalless at half time — but this game has plenty more to give. Stay with us!`,
+      `Both sides cancel each other out in a tight first half. Second 45 incoming! 🍊`,
+    ]);
   else if (diff === -1)
-    comment = rand([`${away} in front at the break. ${home} need a reaction.`, `${home} behind going into the second half. Comeback on?`]);
+    comment = rand([
+      `${away} lead at the break. ${home} need to come out fighting after the restart.`,
+      `${home} trail at half time. Can they turn this around? It's happened before... 🔄`,
+      `${away} in front going into the second half. ${home} fans will be hoping for a response.`,
+    ]);
   else
-    comment = rand([`${away} comfortable here. Tough evening for ${home}.`, `${home} well off the pace in the first half.`]);
-  return `🟡 HALF TIME\n\n${home} ${hg} - ${ag} ${away}\n\n${comment}\n\n📍 ${league}\n🔔 Follow for second half updates`;
+    comment = rand([
+      `${away} have been the better team by far. ${home} really need to wake up in the second half.`,
+      `Heavy first half for ${home}. ${away} are in total control right now.`,
+    ]);
+  return `🟡 HALF TIME\n\n${home} ${hg} – ${ag} ${away}\n\n${comment}\n\n📍 ${league}\n🔔 Back shortly for second half updates!`;
 }
 
 function ftMsg(home, hg, away, ag, league, isAet) {
@@ -144,23 +175,49 @@ function ftMsg(home, hg, away, ag, league, isAet) {
   const diff = hg - ag;
   let comment;
   if (diff > 1)
-    comment = rand([`Comfortable win for ${home} in the end.`, `${home} deserved that. Solid performance.`]);
+    comment = rand([
+      `Comfortable win for ${home} in the end. Absolutely no complaints there.`,
+      `${home} were excellent tonight. ${away} couldn't live with them.`,
+      `Dominant display from ${home}. Three points and a clean sheet? Job done! 💪`,
+    ]);
   else if (diff === 1)
-    comment = rand([`${home} just about edge it. Three points in the bag.`, `Narrow win for ${home} but they'll take it.`]);
+    comment = rand([
+      `${home} hold on for three points! They'll be delighted with that result.`,
+      `Narrow win but ${home} will take it. Every goal counts in this game!`,
+      `${home} grind out a vital win. Not pretty but the points are what matter 🏆`,
+      `One goal was enough! ${home} pick up a crucial three points tonight.`,
+    ]);
   else if (diff === 0)
-    comment = rand([`A point each. Probably fair on the night.`, `They couldn't be separated. One point apiece.`]);
+    comment = rand([
+      `A point each and probably fair on the night. Honours even! 🤝`,
+      `They couldn't be separated. Both sets of fans will have mixed feelings about this one.`,
+      `It ends all square. One point apiece — was a draw the right result? 🤔`,
+    ]);
   else if (diff === -1)
-    comment = rand([`${away} nick it. Well done to them tonight.`, `${home} fall short. ${away} take the three points.`]);
+    comment = rand([
+      `${away} take all three points. Well deserved on the night.`,
+      `${home} fall short in the end. ${away} will be celebrating tonight! 🎉`,
+      `${away} nick it. Tough result for ${home} to take but that's football.`,
+    ]);
   else
-    comment = rand([`${away} run out comfortable winners tonight.`, `Heavy defeat for ${home}. Tough night.`]);
-  return `🏁 FULL TIME${suffix}\n\n${home} ${hg} - ${ag} ${away}\n\n${comment}\n\n📍 ${league}`;
+    comment = rand([
+      `${away} run out comfortable winners. ${home} will want to forget this one quickly.`,
+      `Heavy defeat for ${home}. ${away} were simply too good tonight.`,
+    ]);
+  return `🏁 FULL TIME${suffix}\n\n${home} ${hg} – ${ag} ${away}\n\n${comment}\n\n📍 ${league}\n\nWhat did you think of that one? Drop your thoughts below 👇`;
 }
 
 function varMsg(home, hg, away, ag, scorer, minute, league) {
+  const opener = rand([
+    `VAR CHECK — and the goal is DISALLOWED! 😤`,
+    `VAR steps in! ${scorer}'s goal has been ruled out! 🖥️`,
+    `No goal! VAR overturns it! ${scorer} will NOT be pleased 😩`,
+    `VAR ruins the party! Goal ruled out after a check 📺`,
+  ]);
   return (
-    `VAR — Goal ruled out!\n\n` +
-    `${scorer}'s goal has been disallowed after a VAR check (${minute}')\n\n` +
-    `${home} ${hg} - ${ag} ${away}\n\n📍 ${league}`
+    `${opener}\n\n` +
+    `${scorer}'s effort at ${minute}' has been disallowed after a VAR review.\n\n` +
+    `${home} ${hg} – ${ag} ${away}\n\n📍 ${league}`
   );
 }
 
