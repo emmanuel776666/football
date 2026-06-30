@@ -10,151 +10,73 @@ const app = express();
 const API_KEY = process.env.API_KEY;
 const PAGE_ID = process.env.PAGE_ID;
 const PAGE_ACCESS_TOKEN = process.env.PAGE_ACCESS_TOKEN;
-
-// =======================
-// NEW SECOND PAGE
-// =======================
-
 const PAGE_ID_2 = process.env.PAGE_ID_2;
 const PAGE_ACCESS_TOKEN_2 = process.env.PAGE_ACCESS_TOKEN_2;
-
-// =======================
-// MEMORY
-// =======================
 
 let previousScores = {};
 let postedHalfTime = {};
 let postedKickOff = {};
 let postedFullTime = {};
-
-
 let isCheckingLive = false;
 
-// =======================
-// MAIN FUNCTION
-// =======================
-
 async function getLiveMatches() {
-
   try {
+    const response = await axios.get("https://api.football-data.org/v4/matches", {
+      headers: { "X-Auth-Token": API_KEY },
+    });
 
-    const response = await axios.get(
-      "https://api.football-data.org/v4/matches",
-      {
-        headers: {
-          "X-Auth-Token": API_KEY
-        }
-      }
-    );
-
-    const requestsLeft =
-      response.headers["x-requests-available"] || "Not provided";
-
-    const resetTime =
-      response.headers["x-requestcounter-reset"] || "Unknown";
-
-    console.log(`Requests Left: ${requestsLeft}`);
-    console.log(`Counter Reset In: ${resetTime} seconds`);
+    const requestsLeft = response.headers["x-requests-available"] || "N/A";
+    const resetTime = response.headers["x-requestcounter-reset"] || "N/A";
+    console.log(`requests left: ${requestsLeft} | resets in: ${resetTime}s`);
 
     const matches = response.data.matches;
-
     if (!matches.length) return;
 
     for (const match of matches) {
-
       const fixtureId = match.id;
       const status = match.status;
 
-      if (!["LIVE", "IN_PLAY", "PAUSED", "FINISHED"].includes(status)) {
-        continue;
-      }
+      if (!["LIVE", "IN_PLAY", "PAUSED", "FINISHED"].includes(status)) continue;
 
       const home = match.homeTeam.name;
       const away = match.awayTeam.name;
-
-      const homeGoals =
-        match.score.fullTime.home ??
-        match.score.halfTime.home ??
-        0;
-
-      const awayGoals =
-        match.score.fullTime.away ??
-        match.score.halfTime.away ??
-        0;
-
+      const homeGoals = match.score.fullTime.home ?? match.score.halfTime.home ?? 0;
+      const awayGoals = match.score.fullTime.away ?? match.score.halfTime.away ?? 0;
       const currentScore = `${homeGoals}-${awayGoals}`;
 
       let minute = "";
-
       if (match.goals && match.goals.length > 0) {
-
-        const latestGoal = match.goals[match.goals.length - 1];
-
-        if (latestGoal.minute) {
-
-          minute = `${latestGoal.minute}'`;
-
-          if (latestGoal.injuryTime) {
-            minute = `${latestGoal.minute}+${latestGoal.injuryTime}'`;
-          }
-
+        const latest = match.goals[match.goals.length - 1];
+        if (latest.minute) {
+          minute = latest.injuryTime
+            ? `${latest.minute}+${latest.injuryTime}'`
+            : `${latest.minute}'`;
         }
-
       }
 
-      if (previousScores[fixtureId] === undefined) {
-        previousScores[fixtureId] = currentScore;
-      }
+      if (previousScores[fixtureId] === undefined) previousScores[fixtureId] = currentScore;
 
-      if (
-        ["LIVE", "IN_PLAY"].includes(status) &&
-        !postedKickOff[fixtureId]
-      ) {
-
-        const kickOffMessage =
-`🚩Kick Off!:${home} 0-0 ${away}
-
-
-
-📢 Enjoying the live updates? Follow the page and join thousands of fans keeping up with every goal and key moment. 🔥
-#MatchLoop #GoalAlert #LiveFootball ⚽🔥`;
-
-        await postToFacebook(kickOffMessage);
-
+      if (["LIVE", "IN_PLAY"].includes(status) && !postedKickOff[fixtureId]) {
+        const msg =
+          `🚩Kick Off! ${home} 0-0 ${away}\n\n` +
+          `📢 Follow for live goals and match updates. ⚽🔥`;
+        await postToFacebook(msg);
         postedKickOff[fixtureId] = true;
       }
 
       if (status === "PAUSED" && !postedHalfTime[fixtureId]) {
-
-        const halfTimeMessage =
-`🚩HT:${home} ${homeGoals}-${awayGoals} ${away}`;
-
-        await postToFacebook(halfTimeMessage);
-
+        await postToFacebook(`🚩HT: ${home} ${homeGoals}-${awayGoals} ${away}`);
         postedHalfTime[fixtureId] = true;
       }
 
       if (status === "FINISHED" && !postedFullTime[fixtureId]) {
-
-        const fullTimeMessage =
-`🏁FT:${home} ${homeGoals}-${awayGoals} ${away}`;
-
-        await postToFacebook(fullTimeMessage);
-
+        await postToFacebook(`🏁FT: ${home} ${homeGoals}-${awayGoals} ${away}`);
         postedFullTime[fixtureId] = true;
       }
 
       if (previousScores[fixtureId] !== currentScore) {
-
-        const oldScore = previousScores[fixtureId];
-
-        const oldTotal = oldScore
-          .split("-")
-          .reduce((a, b) => Number(a) + Number(b), 0);
-
-        const newTotal = currentScore
-          .split("-")
-          .reduce((a, b) => Number(a) + Number(b), 0);
+        const oldTotal = previousScores[fixtureId].split("-").reduce((a, b) => Number(a) + Number(b), 0);
+        const newTotal = currentScore.split("-").reduce((a, b) => Number(a) + Number(b), 0);
 
         if (newTotal < oldTotal) {
           previousScores[fixtureId] = currentScore;
@@ -162,178 +84,86 @@ async function getLiveMatches() {
         }
 
         if (newTotal > oldTotal) {
-
-          const message =
-`🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}
-
-⚽ GOAL!  ${minute}`;
-
-          await postToFacebook(message);
+          await postToFacebook(`🚩Live: ${home} ${homeGoals}-${awayGoals} ${away}\n\n⚽ GOAL! ${minute}`);
         }
 
         previousScores[fixtureId] = currentScore;
       }
-
     }
-
   } catch (error) {
     console.log(error.message);
   }
-
 }
-// =======================
-// POST TO ONE PAGE
-// =======================
 
 async function postToFacebook(message) {
-
   try {
-
-    const response = await axios.post(
+    const res = await axios.post(
       `https://graph.facebook.com/${PAGE_ID}/feed`,
       null,
-      {
-        params: {
-          message,
-          access_token: PAGE_ACCESS_TOKEN
-        }
-      }
+      { params: { message, access_token: PAGE_ACCESS_TOKEN } }
     );
-
-    return response.data.id;
-
-  } catch (error) {
-    console.log(error.message);
+    return res.data.id;
+  } catch (err) {
+    console.log(err.message);
   }
-
 }
 
-// =======================
-// POST TO BOTH PAGES (NEW)
-// =======================
-
-async function postToFacebookBothPages(message) {
-
+async function postToBothPages(message) {
   try {
-
-    await axios.post(
-      `https://graph.facebook.com/${PAGE_ID}/feed`,
-      null,
-      {
-        params: {
-          message,
-          access_token: PAGE_ACCESS_TOKEN
-        }
-      }
-    );
-
-    await axios.post(
-      `https://graph.facebook.com/${PAGE_ID_2}/feed`,
-      null,
-      {
-        params: {
-          message,
-          access_token: PAGE_ACCESS_TOKEN_2
-        }
-      }
-    );
-
-    console.log("Posted to BOTH pages (feature)");
-
-  } catch (error) {
-    console.log(error.message);
+    await axios.post(`https://graph.facebook.com/${PAGE_ID}/feed`, null, {
+      params: { message, access_token: PAGE_ACCESS_TOKEN },
+    });
+    await axios.post(`https://graph.facebook.com/${PAGE_ID_2}/feed`, null, {
+      params: { message, access_token: PAGE_ACCESS_TOKEN_2 },
+    });
+    console.log("posted to both pages");
+  } catch (err) {
+    console.log(err.message);
   }
-
 }
-
-
-// =======================
-// TODAY FIXTURES
-// =======================
 
 async function postTodayFixtures() {
-
   try {
-
-    const response = await axios.get(
-      "https://api.football-data.org/v4/matches",
-      {
-        headers: {
-          "X-Auth-Token": API_KEY
-        }
-      }
-    );
-
-    const matches = response.data.matches;
-
-    const now = new Date();
-
-    const validMatches = matches.filter(match => {
-      const kickoff = new Date(match.utcDate);
-      return kickoff > now && ["SCHEDULED", "TIMED"].includes(match.status);
+    const response = await axios.get("https://api.football-data.org/v4/matches", {
+      headers: { "X-Auth-Token": API_KEY },
     });
 
-    if (!validMatches.length) return;
+    const matches = response.data.matches;
+    const now = new Date();
 
-    // =======================
-    // FLAGS
-    // =======================
+    const upcoming = matches.filter(m => {
+      const ko = new Date(m.utcDate);
+      return ko > now && ["SCHEDULED", "TIMED"].includes(m.status);
+    });
 
-    const countryFlags = {
-      "WC": "🌍",
-      "CL": "🇪🇺",
-      "BL1": "🇩🇪",
-      "DED": "🇳🇱",
-      "BSA": "🇧🇷",
-      "PD": "🇪🇸",
-      "FL1": "🇫🇷",
-      "ELC": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F",
-      "PPL": "🇵🇹",
-      "EC": "🇪🇺",
-      "SA": "🇮🇹",
-      "PL": "\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC77\uDB40\uDC6C\uDB40\uDC73\uDB40\uDC7F"
+    if (!upcoming.length) return;
+
+    const flags = {
+      WC: "🌍", CL: "🇪🇺", BL1: "🇩🇪", DED: "🇳🇱", BSA: "🇧🇷",
+      PD: "🇪🇸", FL1: "🇫🇷", PPL: "🇵🇹", EC: "🇪🇺", SA: "🇮🇹",
     };
 
-    let message = `🚩Today's fixtures:\n🤔 What are your predictions???\n\n`;
-
-    for (const match of validMatches) {
-
-      const home = match.homeTeam.name;
-      const away = match.awayTeam.name;
-
-      const flag = countryFlags[match.competition.code] || "⚽";
-
-      const matchTime = new Date(match.utcDate).toLocaleTimeString(
-        "en-GB",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          timeZone: "Africa/Lagos"
-        }
-      );
-
-      message += `${flag} ${home} 🆚  ${away} (${matchTime})\n`;
+    let msg = `Today's fixtures 📋\n\n`;
+    for (const m of upcoming) {
+      const flag = flags[m.competition.code] || "⚽";
+      const time = new Date(m.utcDate).toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Africa/Lagos",
+      });
+      msg += `${flag} ${m.homeTeam.name} vs ${m.awayTeam.name} (${time})\n`;
     }
+    msg += `\n🔔 Follow for live goals and updates`;
 
-    message += `\n\n\n🤔 What are your predictions?\n📢 Follow for live goals, scores & match updates.\n#WorldCup2026 #LiveScores #FootballUpdates #Fixtures #FabrizioRomano #ESPNFC #Onefootball #The18 `;
-
-    await postToFacebookBothPages(message);
-
-  } catch (error) {
-    console.log(error.message);
+    await postToBothPages(msg);
+  } catch (err) {
+    console.log(err.message);
   }
-
 }
-
-// =======================
-// CRON JOBS
-// =======================
 
 cron.schedule("*/6 * * * * *", async () => {
   if (isCheckingLive) return;
-
   isCheckingLive = true;
-
   try {
     await getLiveMatches();
   } finally {
@@ -349,14 +179,10 @@ setTimeout(() => {
   getLiveMatches();
 }, 60000);
 
-// =======================
-// SERVER
-// =======================
-
 const PORT = process.env.PORT || 5000;
 
 app.get("/", (req, res) => {
-  res.send("Football bot is running...");
+  res.send("running");
 });
 
 app.get("/privacy-policy", (req, res) => {
@@ -364,5 +190,5 @@ app.get("/privacy-policy", (req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server running on port " + PORT);
+  console.log(`port ${PORT}`);
 });
