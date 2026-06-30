@@ -350,11 +350,11 @@ async function checkMatches() {
   }
 }
 
-// set sleep until 5 PM WAT (16:00 UTC) today on startup
+// set sleep until 6 PM WAT (17:00 UTC) today on startup
 function sleepUntil5pmWAT() {
   const now = new Date();
   const target = new Date();
-  target.setUTCHours(16, 0, 0, 0); // 16:00 UTC = 17:00 WAT
+  target.setUTCHours(17, 0, 0, 0); // 17:00 UTC = 18:00 WAT
   if (target <= now) return null;   // already past 5 PM — run normally
   return target;
 }
