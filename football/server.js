@@ -356,6 +356,16 @@ app.get("/", (req, res) => {
   res.send("Football bot is running...");
 });
 
+app.get("/test", async (req, res) => {
+  const testMessage = `✅ Bot Test Post!\n\n⚽ Football bot is live and connected to your Facebook page.\n🚩 Ready to post live scores, goals & updates automatically!`;
+  const postId = await postToFacebook(testMessage);
+  if (postId) {
+    res.send(`✅ Test post sent! Post ID: ${postId}`);
+  } else {
+    res.send("❌ Post failed — check PAGE_ID and PAGE_ACCESS_TOKEN.");
+  }
+});
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port " + PORT);
 });
