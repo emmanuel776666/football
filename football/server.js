@@ -19,7 +19,67 @@ let postedHalfTime = {};
 let postedFullTime = {};
 let goalPosts = {};
 let playerGoals = {};
+
 let requestsRemaining = 100;
+let hasLiveMatches = false;
+let pausedUntilMidnight = false;
+
+// how often to poll based on remaining quota and match state
+// budget: 100/day. realistic split: ~30 during live matches + ~60 idle = 90 total
+function getInterval() {
+  if (pausedUntilMidnight) return null;
+
+  if (requestsRemaining < 5)  return null;         // stop — too low
+  if (requestsRemaining < 10) return 45 * 60000;   // 45 min
+  if (requestsRemaining < 20) return 30 * 60000;   // 30 min
+  if (requestsRemaining < 40) return hasLiveMatches ? 8 * 60000 : 25 * 60000;
+  return hasLiveMatches ? 3 * 60000 : 20 * 60000;  // 3 min live / 20 min idle
+}
+
+function scheduleNext() {
+  const ms = getInterval();
+  if (ms === null) {
+    console.log(`quota too low (${requestsRemaining} left) — paused until midnight`);
+    pausedUntilMidnight = true;
+    return;
+  }
+  const mins = Math.round(ms / 60000);
+  console.log(`next check in ${mins} min (${requestsRemaining} requests left, live: ${hasLiveMatches})`);
+  setTimeout(run, ms);
+}
+
+async function run() {
+  if (isCheckingLive) {
+    scheduleNext();
+    return;
+  }
+  isCheckingLive = true;
+  try {
+    await checkMatches();
+  } finally {
+    isCheckingLive = false;
+    scheduleNext();
+  }
+}
+
+// reset at midnight so the bot resumes at full quota each day
+cron.schedule("0 0 * * *", () => {
+  console.log("midnight reset — resuming normal operation");
+  pausedUntilMidnight = false;
+  requestsRemaining = 100;
+  previousScores = {};
+  postedKickOff = {};
+  postedHalfTime = {};
+  postedFullTime = {};
+  goalPosts = {};
+  playerGoals = {};
+  run();
+});
+
+// post today's fixtures every morning at 8 AM WAT (7 UTC)
+cron.schedule("0 7 * * *", () => {
+  postDailyFixtures();
+});
 
 function rand(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -44,10 +104,8 @@ function goalMsg(home, hg, away, ag, scorer, minute, assist, label, league) {
     `${scorer} with the finish — it's a goal!`,
     `And it's in! ${scorer} makes it count`,
   ];
-
   const labelLine = label ? `\n🎩 ${label}` : "";
   const assistLine = assist ? `\nAssist: ${assist} 👟` : "";
-
   return (
     `⚽ ${rand(lines)} (${minute}')${labelLine}\n\n` +
     `${home} ${hg} - ${ag} ${away}${assistLine}\n\n` +
@@ -58,75 +116,34 @@ function goalMsg(home, hg, away, ag, scorer, minute, assist, label, league) {
 function htMsg(home, hg, away, ag, league) {
   const diff = hg - ag;
   let comment;
-
   if (diff > 1)
-    comment = rand([
-      `${home} well in control here. Second half to come.`,
-      `Dominant first half from ${home}. Can ${away} respond?`,
-    ]);
+    comment = rand([`${home} well in control here. Second half to come.`, `Dominant first half from ${home}. Can ${away} respond?`]);
   else if (diff === 1)
-    comment = rand([
-      `${home} edging it but nothing is settled yet.`,
-      `Tight game. ${home} shade it so far but ${away} still in this.`,
-    ]);
+    comment = rand([`${home} edging it but nothing is settled yet.`, `Tight game. ${home} shade it so far but ${away} still in this.`]);
   else if (diff === 0)
-    comment = rand([
-      `Level at the break. Both teams will fancy their chances.`,
-      `Goalless at half time. Second half could be interesting.`,
-      `Honours even so far. Plenty still to play for.`,
-    ]);
+    comment = rand([`Level at the break. Both teams will fancy their chances.`, `Goalless at half time. Second half could be interesting.`, `Honours even so far. Plenty still to play for.`]);
   else if (diff === -1)
-    comment = rand([
-      `${away} in front at the break. ${home} need a reaction.`,
-      `${home} behind going into the second half. Comeback on?`,
-    ]);
+    comment = rand([`${away} in front at the break. ${home} need a reaction.`, `${home} behind going into the second half. Comeback on?`]);
   else
-    comment = rand([
-      `${away} comfortable here. Tough evening for ${home}.`,
-      `${home} well off the pace in the first half.`,
-    ]);
-
-  return (
-    `🟡 HALF TIME\n\n${home} ${hg} - ${ag} ${away}\n\n` +
-    `${comment}\n\n📍 ${league}\n🔔 Follow for second half updates`
-  );
+    comment = rand([`${away} comfortable here. Tough evening for ${home}.`, `${home} well off the pace in the first half.`]);
+  return `🟡 HALF TIME\n\n${home} ${hg} - ${ag} ${away}\n\n${comment}\n\n📍 ${league}\n🔔 Follow for second half updates`;
 }
 
 function ftMsg(home, hg, away, ag, league, isAet) {
   const suffix = isAet ? " (AET)" : "";
   const diff = hg - ag;
   let comment;
-
   if (diff > 1)
-    comment = rand([
-      `Comfortable win for ${home} in the end.`,
-      `${home} deserved that. Solid performance.`,
-    ]);
+    comment = rand([`Comfortable win for ${home} in the end.`, `${home} deserved that. Solid performance.`]);
   else if (diff === 1)
-    comment = rand([
-      `${home} just about edge it. Three points in the bag.`,
-      `Narrow win for ${home} but they'll take it.`,
-    ]);
+    comment = rand([`${home} just about edge it. Three points in the bag.`, `Narrow win for ${home} but they'll take it.`]);
   else if (diff === 0)
-    comment = rand([
-      `A point each. Probably fair on the night.`,
-      `They couldn't be separated. One point apiece.`,
-    ]);
+    comment = rand([`A point each. Probably fair on the night.`, `They couldn't be separated. One point apiece.`]);
   else if (diff === -1)
-    comment = rand([
-      `${away} nick it. Well done to them tonight.`,
-      `${home} fall short. ${away} take the three points.`,
-    ]);
+    comment = rand([`${away} nick it. Well done to them tonight.`, `${home} fall short. ${away} take the three points.`]);
   else
-    comment = rand([
-      `${away} run out comfortable winners tonight.`,
-      `Heavy defeat for ${home}. Tough night.`,
-    ]);
-
-  return (
-    `🏁 FULL TIME${suffix}\n\n${home} ${hg} - ${ag} ${away}\n\n` +
-    `${comment}\n\n📍 ${league}`
-  );
+    comment = rand([`${away} run out comfortable winners tonight.`, `Heavy defeat for ${home}. Tough night.`]);
+  return `🏁 FULL TIME${suffix}\n\n${home} ${hg} - ${ag} ${away}\n\n${comment}\n\n📍 ${league}`;
 }
 
 function varMsg(home, hg, away, ag, scorer, minute, league) {
@@ -186,6 +203,9 @@ async function postDailyFixtures() {
       { headers: { "x-apisports-key": API_KEY } }
     );
 
+    const remaining = res.headers["x-ratelimit-requests-remaining"] || res.headers["x-requests-available"];
+    if (remaining !== undefined) requestsRemaining = Number(remaining);
+
     const fixtures = res.data.response;
     if (!fixtures || !fixtures.length) return;
 
@@ -193,12 +213,10 @@ async function postDailyFixtures() {
     const upcoming = fixtures.filter(f => new Date(f.fixture.date) > now);
     if (!upcoming.length) return;
 
-    let msg = `Here are today\'s fixtures 📋\n\n`;
+    let msg = `Here are today's fixtures 📋\n\n`;
     for (const f of upcoming) {
       const time = new Date(f.fixture.date).toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "Africa/Lagos",
+        hour: "2-digit", minute: "2-digit", timeZone: "Africa/Lagos",
       });
       msg += `${f.teams.home.name} vs ${f.teams.away.name} — ${time}\n`;
     }
@@ -213,24 +231,19 @@ async function postDailyFixtures() {
 
 async function checkMatches() {
   try {
-    if (requestsRemaining !== null && requestsRemaining < 5) {
-      console.log(`rate limit low (${requestsRemaining} left) — skipping`);
-      return;
-    }
-
     const res = await axios.get(
       `https://v3.football.api-sports.io/fixtures?live=${LEAGUES}`,
       { headers: { "x-apisports-key": API_KEY } }
     );
 
-    const remaining =
-      res.headers["x-ratelimit-requests-remaining"] ||
-      res.headers["x-requests-available"];
+    const remaining = res.headers["x-ratelimit-requests-remaining"] || res.headers["x-requests-available"];
     if (remaining !== undefined) requestsRemaining = Number(remaining);
 
     console.log(`requests left: ${requestsRemaining}`);
 
     const matches = res.data.response;
+    hasLiveMatches = matches.length > 0;
+
     if (!matches.length) {
       console.log("no live matches");
       return;
@@ -327,22 +340,8 @@ async function checkMatches() {
   }
 }
 
-cron.schedule("*/3 * * * *", async () => {
-  if (isCheckingLive) return;
-  isCheckingLive = true;
-  try {
-    await checkMatches();
-  } finally {
-    isCheckingLive = false;
-  }
-});
-
-cron.schedule("0 7 * * *", () => {
-  postDailyFixtures();
-});
-
 console.log("bot started");
-checkMatches();
+run();
 
 const PORT = process.env.PORT || 5000;
 
@@ -352,7 +351,7 @@ app.get("/", (req, res) => {
 
 app.get("/test", async (req, res) => {
   const msg =
-    `Test post 👋\n\nThe bot is live. Goal alerts, kick-off and full-time updates are running.\n\n🔔 Follow the page so you don\'t miss a thing`;
+    `Test post 👋\n\nThe bot is live. Goal alerts, kick-off and full-time updates are running.\n\n🔔 Follow the page so you don't miss a thing`;
   const img = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Association_football_pitches_around_the_world.jpg/640px-Association_football_pitches_around_the_world.jpg";
   const postId = await postPhoto(img, msg);
   res.send(postId ? `done — ${postId}` : "failed — check token and page id");
@@ -371,7 +370,6 @@ app.get("/manu", async (req, res) => {
     `20 league titles. 3 European Cups. Sir Alex. Cantona. Ronaldo. Rooney. Legends don't retire — they live forever in the stands.\n\n` +
     `United we stand 💪🔴\n\n` +
     `#MUFC #ManchesterUnited #RedDevils #OldTrafford #GloryGlory`;
-
   const img = "https://i.imgur.com/9Y9A7uB.jpeg";
   const postId = await postPhoto(img, caption);
   res.send(postId ? `done — ${postId}` : "failed");
@@ -381,7 +379,10 @@ app.get("/status", (req, res) => {
   res.json({
     running: true,
     requestsRemaining,
+    hasLiveMatches,
+    pausedUntilMidnight,
     matchesTracked: Object.keys(previousScores).length,
+    nextInterval: getInterval() ? `${Math.round(getInterval() / 60000)} min` : "paused",
   });
 });
 
