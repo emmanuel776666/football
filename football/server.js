@@ -363,6 +363,20 @@ app.get("/fixtures", async (req, res) => {
   res.send("fixtures posted");
 });
 
+app.get("/manu", async (req, res) => {
+  const caption =
+    `🔴 MANCHESTER UNITED 🔴\n\n` +
+    `There's only ONE club that gives you this feeling. Win, lose or draw — the Red Devils never leave your heart ❤️\n\n` +
+    `Old Trafford roars. The badge means everything. This shirt carries history that no other club can touch 🏆\n\n` +
+    `20 league titles. 3 European Cups. Sir Alex. Cantona. Ronaldo. Rooney. Legends don't retire — they live forever in the stands.\n\n` +
+    `United we stand 💪🔴\n\n` +
+    `#MUFC #ManchesterUnited #RedDevils #OldTrafford #GloryGlory`;
+
+  const img = "https://i.imgur.com/9Y9A7uB.jpeg";
+  const postId = await postPhoto(img, caption);
+  res.send(postId ? `done — ${postId}` : "failed");
+});
+
 app.get("/status", (req, res) => {
   res.json({
     running: true,
