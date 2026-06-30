@@ -23,20 +23,30 @@ let playerGoals = {};
 let requestsRemaining = 100;
 let hasLiveMatches = false;
 let pausedUntilMidnight = false;
+let pausedUntil = null; // Date object — bot sleeps until this time
 
-// how often to poll based on remaining quota and match state
-// budget: 100/day. realistic split: ~30 during live matches + ~60 idle = 90 total
 function getInterval() {
   if (pausedUntilMidnight) return null;
-
-  if (requestsRemaining < 5)  return null;         // stop — too low
-  if (requestsRemaining < 10) return 45 * 60000;   // 45 min
-  if (requestsRemaining < 20) return 30 * 60000;   // 30 min
+  if (requestsRemaining < 5)  return null;
+  if (requestsRemaining < 10) return 45 * 60000;
+  if (requestsRemaining < 20) return 30 * 60000;
   if (requestsRemaining < 40) return hasLiveMatches ? 8 * 60000 : 25 * 60000;
-  return hasLiveMatches ? 3 * 60000 : 20 * 60000;  // 3 min live / 20 min idle
+  return hasLiveMatches ? 3 * 60000 : 20 * 60000;
 }
 
 function scheduleNext() {
+  // sleeping until a specific time
+  if (pausedUntil && new Date() < pausedUntil) {
+    const ms = pausedUntil - new Date();
+    const mins = Math.round(ms / 60000);
+    console.log(`sleeping for ${mins} min — resumes at ${pausedUntil.toLocaleTimeString("en-GB", { timeZone: "Africa/Lagos" })} WAT`);
+    setTimeout(() => {
+      pausedUntil = null;
+      run();
+    }, ms);
+    return;
+  }
+
   const ms = getInterval();
   if (ms === null) {
     console.log(`quota too low (${requestsRemaining} left) — paused until midnight`);
@@ -340,7 +350,20 @@ async function checkMatches() {
   }
 }
 
+// set sleep until 5 PM WAT (16:00 UTC) today on startup
+function sleepUntil5pmWAT() {
+  const now = new Date();
+  const target = new Date();
+  target.setUTCHours(16, 0, 0, 0); // 16:00 UTC = 17:00 WAT
+  if (target <= now) return null;   // already past 5 PM — run normally
+  return target;
+}
+
 console.log("bot started");
+pausedUntil = sleepUntil5pmWAT();
+if (pausedUntil) {
+  console.log(`bot sleeping until 5 PM WAT — ${pausedUntil.toLocaleTimeString("en-GB", { timeZone: "Africa/Lagos" })}`);
+}
 run();
 
 const PORT = process.env.PORT || 5000;
@@ -381,9 +404,30 @@ app.get("/status", (req, res) => {
     requestsRemaining,
     hasLiveMatches,
     pausedUntilMidnight,
+    sleepingUntil: pausedUntil ? pausedUntil.toLocaleTimeString("en-GB", { timeZone: "Africa/Lagos" }) + " WAT" : null,
     matchesTracked: Object.keys(previousScores).length,
-    nextInterval: getInterval() ? `${Math.round(getInterval() / 60000)} min` : "paused",
+    nextInterval: pausedUntil ? "sleeping" : getInterval() ? `${Math.round(getInterval() / 60000)} min` : "paused",
   });
+});
+
+app.get("/wake", (req, res) => {
+  pausedUntil = null;
+  pausedUntilMidnight = false;
+  run();
+  res.send("bot resumed");
+});
+
+app.get("/sleep", (req, res) => {
+  const hour = parseInt(req.query.hour || "17");
+  const target = new Date();
+  target.setUTCHours(hour - 1, 0, 0, 0); // convert WAT to UTC
+  if (target <= new Date()) {
+    res.send("that time has already passed today");
+    return;
+  }
+  pausedUntil = target;
+  scheduleNext();
+  res.send(`sleeping until ${target.toLocaleTimeString("en-GB", { timeZone: "Africa/Lagos" })} WAT`);
 });
 
 app.listen(PORT, "0.0.0.0", () => {
