@@ -480,6 +480,29 @@ app.get("/wake", (req, res) => {
   res.send("bot resumed");
 });
 
+app.get("/comeback", async (req, res) => {
+  const messages = [
+    `Sorry for going quiet on you all! 🙏 We had a little technical hiccup but we are BACK and fully live now!\n\nAll goal alerts, kick-off and full-time updates are running again. You won't miss a single thing from here on 💪\n\n⚽ Drop a comment below if there's a match you want us to cover!\n🔔 Make sure you're following the page so you never miss a goal alert!`,
+    `We're back! 🔔 Apologies for the silence — we had some downtime but the bot is fully up and running again now.\n\nEvery goal, every kick-off, every final whistle — we've got you covered from here 💪⚽\n\nStay with us, the updates are coming! 🔥`,
+    `Back online! 🟢 Sorry we went quiet for a bit — technical issues on our end but everything is sorted now.\n\nLive match updates are running again. Goals, half-time scores, full-time results — all of it ⚽\n\nTag a friend who needs live football updates! 👇🔔`,
+  ];
+  const msg = messages[Math.floor(Math.random() * messages.length)];
+  const img = "https://i.imgur.com/9Y9A7uB.jpeg";
+  const postId = await postPhoto(img, msg);
+  // immediately trigger a live check after posting
+  pausedUntil = null;
+  pausedUntilMidnight = false;
+  run();
+  res.send(postId ? `comeback post sent — ${postId}` : "post failed — check token");
+});
+
+app.get("/check", async (req, res) => {
+  pausedUntil = null;
+  pausedUntilMidnight = false;
+  run();
+  res.send("live check triggered");
+});
+
 app.get("/sleep", (req, res) => {
   const hour = parseInt(req.query.hour || "17");
   const target = new Date();
